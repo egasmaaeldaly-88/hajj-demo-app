@@ -7,10 +7,11 @@ from datetime import time as dtime
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import qrcode
 import streamlit as st
 
-st.set_page_config(page_title="Smart Housing & Logistics", page_icon="🕋", layout="wide")
+st.set_page_config(page_title="Daly Track | Smart Housing & Logistics", page_icon="🕋", layout="wide")
 s = st.session_state
 s.setdefault("lang", "ar")
 s.setdefault("dark", False)
@@ -28,11 +29,11 @@ C = THEME["dark" if s.dark else "light"]
 # ---------- TEXT ----------
 L = {
     "ar": dict(
-        title="منصة التسكين والتفويج الذكي", sub="نموذج أولي تفاعلي · بيانات تجريبية فقط", hotel="الفندق",
+        brand="دالي تراك", by="بتقنية", title="منصة التسكين والتفويج الذكي", sub="نموذج أولي تفاعلي · بيانات تجريبية فقط", hotel="الفندق",
         hotels=["فندق أنوار المدينة", "فندق أبراج الساعة", "فندق دار الضيافة"],
         tabs=["📊 لوحة المدير", "⚡ التسكين الذكي", "🚌 الحافلات", "📱 حضور QR", "💬 واتساب"],
         k=["إجمالي المعتمرين", "الغرف المشغولة", "حالات خاصة بالأدوار الأرضية", "نسبة الحضور"],
-        heat="خريطة حرارية لإشغال الغرف", fl="الدور", rm="الغرفة",
+        heat="مبنى الفندق: إشغال الغرف", all="الكل", ch=("حالة الغرف", "أنواع المعتمرين", "نسبة الحضور", "الإشغال حسب الدور", "ركوب الحافلات", "الفئات العمرية"), rs=("مليانة", "فيها أماكن", "فاضية"), ty=("عائلات", "رجال فرادى", "نساء فرادى", "حالات خاصة"), ag=("أقل من 18", "18–39", "40–59", "60–69", "70+"), ser=("الإجمالي", "ركبوا"), ok=("سجّلوا", "لم يسجّلوا"), lg=("فاضية", "فيها أماكن", "مليانة", "حالة خاصة"), fb="الإشغال حسب الدور", fl="الدور", rm="الغرفة",
         up="ارفع كشف المعتمرين (Excel/CSV) ببيانات تجريبية فقط", smp="تحميل نموذج Excel",
         run="تشغيل التسكين الذكي", spin="جاري تطبيق قواعد التسكين...", res="نتيجة التسكين",
         dl="تحميل كشف الغرف (Excel)", hint="اضغط تشغيل التسكين لعرض النتيجة.",
@@ -48,11 +49,11 @@ L = {
         foot="نموذج أولي تجريبي: كل البيانات والخرائط والإشعارات محاكاة. يسعدنا سماع تحدياتكم التشغيلية.",
         gm=dict(M="ذكر", F="أنثى")),
     "en": dict(
-        title="Smart Housing & Logistics Platform", sub="Interactive prototype · demo data only", hotel="Hotel",
+        brand="Daly Track", by="Powered by", title="Smart Housing & Logistics Platform", sub="Interactive prototype · demo data only", hotel="Hotel",
         hotels=["Anwar Al-Madinah Hotel", "Abraj Clock Hotel", "Dar Al-Diyafa Hotel"],
         tabs=["📊 Manager", "⚡ Smart housing", "🚌 Buses", "📱 QR check-in", "💬 WhatsApp"],
         k=["Total pilgrims", "Rooms in use", "Special cases on lower floors", "Check-in rate"],
-        heat="Room occupancy heatmap", fl="Floor", rm="Room",
+        heat="Hotel building: room occupancy", all="All", ch=("Room status", "Pilgrim types", "Check-in rate", "Occupancy by floor", "Bus boarding", "Age groups"), rs=("Full", "Has space", "Empty"), ty=("Families", "Single men", "Single women", "Special cases"), ag=("Under 18", "18–39", "40–59", "60–69", "70+"), ser=("Total", "Boarded"), ok=("Checked in", "Not yet"), lg=("Empty", "Has space", "Full", "Special case"), fb="Occupancy by floor", fl="Floor", rm="Room",
         up="Upload pilgrim list (Excel/CSV), demo data only", smp="Download sample Excel",
         run="Run smart housing", spin="Applying housing rules...", res="Housing result",
         dl="Download room list (Excel)", hint="Press Run to see the result.",
@@ -89,7 +90,11 @@ html,body,.stApp{{font-family:'Tajawal',sans-serif}}
  box-shadow:0 10px 24px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.35)}}
 .card small{{color:var(--mute);font-size:14px}} .card b{{display:block;font-size:32px;color:var(--pri);line-height:1.3}}
 .bar{{height:12px;background:var(--line);border-radius:8px;overflow:hidden;box-shadow:inset 0 2px 3px rgba(0,0,0,.2)}}
-.bar i{{display:block;height:100%;background:linear-gradient(90deg,var(--pri2),var(--pri),var(--sand))}}
+.bar i{{display:block;height:100%;background:linear-gradient(90deg,#E7CF8A,#C9A227)}}
+.fl{{display:grid;grid-template-columns:28px repeat(10,1fr);gap:6px;align-items:center;margin:5px 0;color:var(--ink)}}
+.rm{{height:28px;border-radius:6px;box-shadow:0 3px 0 rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.45)}}
+.lg{{margin-inline-end:16px;font-size:13px;color:var(--mute)}}
+.lg i{{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:6px;vertical-align:middle;border:1px solid var(--gold)}}
 .row{{display:grid;grid-template-columns:110px 1fr 120px 90px;gap:12px;align-items:center;margin:12px 0;color:var(--ink)}}
 .phone{{max-width:360px;margin:auto;background:#0B141A;border-radius:28px;padding:16px;border:6px solid #222;box-shadow:0 18px 40px rgba(0,0,0,.35)}}
 .bub{{background:#005C4B;color:#E9EDEF;border-radius:10px 10px 10px 2px;padding:8px 10px;margin:8px 0;font-size:14px}}
@@ -154,7 +159,7 @@ def alloc(d):
     d = d.reset_index(drop=True)
     rooms = [dict(id=f"{f}{i + 1:02d}", floor=f, cap=c, occ=[], g=None) for f in range(1, 11) for i, c in enumerate(CAPS)]
     free = lambda x: x["cap"] - len(x["occ"])
-    fams = sorted(d[d.family != ""].groupby("family"), key=lambda x: (-x[1].special.any(), -len(x[1])))
+    fams = sorted(d[d.family != ""].groupby("family"), key=lambda x: (-int(x[1].special.any()), -len(x[1])))
     for _, g in fams:
         sp, ids = g.special.any(), list(g.index)
         while ids:
@@ -192,13 +197,35 @@ def to_xlsx(df):
     return b.getvalue()
 
 
+
+PAL = [GOLD, "#E7CF8A", "#F3EAD3", "#1B1B1B"]
+
+
+def show(fig, h=290, donut=None):
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", dragmode=False, height=h,
+                      font=dict(color=C["ink"], family="Tajawal"), margin=dict(l=0, r=0, t=40, b=0), title_font_size=16,
+                      legend=dict(orientation="h", y=-0.08, itemclick=False, itemdoubleclick=False))
+    fig.update_xaxes(fixedrange=True, gridcolor=C["line"])
+    fig.update_yaxes(fixedrange=True, gridcolor=C["line"])
+    if donut:
+        fig.add_annotation(text=f"<b>{donut}</b>", showarrow=False, font=dict(size=24, color=C["ink"]))
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False, "scrollZoom": False})
+
+
+def donut(names, vals, title, centre):
+    f = px.pie(names=names, values=vals, hole=.64, title=title, color_discrete_sequence=PAL)
+    f.update_traces(textinfo="percent", textfont_color="#10343A", marker=dict(line=dict(color=C["card"], width=3)),
+                    sort=False, pull=[0.02] * len(names))
+    show(f, donut=centre)
+
+
 def card(label, value, extra=""):
     return f"<div class='card'><small>{label}</small><b>{value}</b><small>{extra}</small></div>"
 
 
 # ---------- TOP BAR ----------
 c1, c2, c3 = st.columns([8, 1, 1])
-c1.markdown(f"<h1 class='ttl'>🕋 {T['title']}</h1><br><small style='color:var(--mute)'>{T['sub']}</small>", unsafe_allow_html=True)
+c1.markdown(f"<h1 class='ttl'>🕋 {T['brand']}</h1><br><small style='color:var(--mute)'>{T['title']} · {T['sub']}</small>", unsafe_allow_html=True)
 c2.button("☀️" if s.dark else "🌙", key="tg_dark", on_click=lambda: s.update(dark=not s.dark))
 c3.button("EN" if AR else "ع", key="tg_lang", on_click=lambda: s.update(lang="en" if AR else "ar"))
 
@@ -229,14 +256,66 @@ with tabs[0]:
     for col, lab, (v, ex) in zip(k, T["k"], vals):
         col.markdown(card(lab, v, ex), unsafe_allow_html=True)
     occ = d[d.room != ""].groupby("room").size()
-    M = np.array([[occ.get(f"{f}{i + 1:02d}", 0) / CAPS[i] for i in range(10)] for f in range(10, 0, -1)])
-    fig = px.imshow(M, x=[str(i + 1) for i in range(10)], y=[str(f) for f in range(10, 0, -1)],
-                    color_continuous_scale=[C["sand"], C["pri"], C["pri2"]], zmin=0, zmax=1, text_auto=".0%",
-                    aspect="auto", labels=dict(x=T["rm"], y=T["fl"], color=""))
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color=C["ink"],
-                      margin=dict(l=0, r=0, t=10, b=0), height=430)
+    f1, f2 = st.columns(2)
+    rng = f1.slider(T["fl"], 1, 10, (1, 10), key="frng")
+    bf = f2.selectbox(T["bus"], [0] + list(range(1, nb + 1)), format_func=lambda x: T["all"] if x == 0 else f"{T['bus']} {x}")
+    dd = d[(d.room != "") & d.floor.between(*rng)]
+    if bf:
+        dd = dd[dd.bus == bf]
+    fl_rng = range(rng[0], rng[1] + 1)
+    cnt = [0, 0, 0]
+    for f in fl_rng:
+        for i in range(10):
+            n_ = int(occ.get(f"{f}{i + 1:02d}", 0))
+            cnt[0 if n_ >= CAPS[i] else 2 if n_ == 0 else 1] += 1
+    g1, g2, g3 = st.columns(3)
+    with g1:
+        donut(T["rs"], cnt, T["ch"][0], f"{cnt[0] + cnt[1]}/{sum(cnt)}")
+    with g2:
+        kind = np.where(dd.special, 3, np.where(dd.family != "", 0, np.where(dd.gender == "M", 1, 2)))
+        donut(T["ty"], [int((kind == k_).sum()) for k_ in range(4)], T["ch"][1], len(dd))
+    with g3:
+        rate = len(s.checked) / tot
+        donut(T["ok"], [len(s.checked), tot - len(s.checked)], T["ch"][2], f"{rate:.0%}")
+    h1, h2, h3 = st.columns(3)
+    with h1:
+        pf = [int((d.floor == f).sum()) / sum(CAPS) for f in fl_rng]
+        f = px.bar(x=[str(x) for x in fl_rng], y=pf, title=T["ch"][3], color_discrete_sequence=[GOLD], text=[f"{v:.0%}" for v in pf])
+        f.update_yaxes(tickformat=".0%", range=[0, 1.05], title=None)
+        f.update_xaxes(title=T["fl"])
+        f.update_traces(textposition="outside", hovertemplate="%{x}: %{y:.0%}<extra></extra>", marker_cornerradius=6)
+        show(f)
+    with h2:
+        bs = [x for x in range(1, nb + 1) if not bf or x == bf]
+        f = go.Figure([go.Bar(name=T["ser"][0], x=[f"{T['bus']} {x}" for x in bs], y=[int(by_bus.get(x, 0)) for x in bs], marker_color="#E7CF8A"),
+                       go.Bar(name=T["ser"][1], x=[f"{T['bus']} {x}" for x in bs], y=[int(boarded.get(x, 0)) for x in bs], marker_color=GOLD)])
+        f.update_layout(barmode="group", title=T["ch"][4])
+        show(f)
+    with h3:
+        grp = pd.cut(dd.age, [-1, 17, 39, 59, 69, 200], labels=list(T["ag"])).value_counts().reindex(list(T["ag"]))
+        f = px.bar(x=list(T["ag"]), y=grp.values, title=T["ch"][5], color_discrete_sequence=[GOLD], text=grp.values)
+        f.update_xaxes(title=None)
+        f.update_yaxes(title=None)
+        f.update_traces(textposition="outside", marker_cornerradius=6)
+        show(f)
+
+    spr = set(d[(d.room != "") & d.special].room)
+    tone = [C["line"] if s.dark else "#F3EAD3", "#E7CF8A", GOLD]
+
+    def cell(f, i):
+        rid, n_, cp = f"{f}{i + 1:02d}", int(occ.get(f"{f}{i + 1:02d}", 0)), CAPS[i]
+        if rid in spr:
+            bg, bd = "#1B1B1B", f"2px solid {GOLD}"
+        else:
+            bg, bd = tone[0 if n_ == 0 else 2 if n_ >= cp else 1], "0"
+        return f"<div class='rm' title='{rid}: {n_}/{cp}' style='background:{bg};border:{bd}'></div>"
+
+    bld = "".join(f"<div class='fl'><span>{f}</span>" + "".join(cell(f, i) for i in range(10)) + "</div>"
+                  for f in range(10, 0, -1))
+    lg = "".join(f"<span class='lg'><i style='background:{c_}'></i>{t_}</span>"
+                 for c_, t_ in zip(tone + ["#1B1B1B"], T["lg"]))
     st.markdown(f"### {T['heat']}")
-    st.plotly_chart(fig, use_container_width=True)
+    st.markdown(f"<div class='card'>{bld}<div style='margin-top:12px'>{lg}</div></div>", unsafe_allow_html=True)
 
 # ---------- 2. HOUSING ----------
 with tabs[1]:
@@ -325,4 +404,4 @@ with tabs[4]:
             st.markdown(f"<div class='card' style='margin-top:14px'><b>{len(mem)}</b><small>{T['wa_q']}</small></div>",
                         unsafe_allow_html=True)
 
-st.markdown(f"<p style='text-align:center;color:var(--mute);margin-top:32px'>{T['foot']}</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align:center;color:var(--mute);margin-top:32px'>{T['foot']}<br><b style='color:var(--pri)'>{T['by']} {T['brand']}</b></p>", unsafe_allow_html=True)

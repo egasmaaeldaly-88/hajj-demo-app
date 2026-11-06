@@ -154,7 +154,7 @@ def alloc(d):
     d = d.reset_index(drop=True)
     rooms = [dict(id=f"{f}{i + 1:02d}", floor=f, cap=c, occ=[], g=None) for f in range(1, 11) for i, c in enumerate(CAPS)]
     free = lambda x: x["cap"] - len(x["occ"])
-    fams = sorted(d[d.family != ""].groupby("family"), key=lambda x: (-x[1].special.any(), -len(x[1])))
+    fams = sorted(d[d.family != ""].groupby("family"), key=lambda x: (-int(x[1].special.any()), -len(x[1])))
     for _, g in fams:
         sp, ids = g.special.any(), list(g.index)
         while ids:

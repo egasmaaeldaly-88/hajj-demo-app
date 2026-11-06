@@ -29,7 +29,15 @@ C = THEME["dark" if s.dark else "light"]
 # ---------- TEXT ----------
 L = {
     "ar": dict(
-        brand="دالي تراك", by="بتقنية", title="منصة التسكين والتفويج الذكي", sub="نموذج أولي تفاعلي · بيانات تجريبية فقط", hotel="الفندق",
+        brand="Daly Track", by="بتقنية",
+        tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🛠 الأسطول والصيانة",
+                driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="💬 واتساب"),
+        rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
+                              mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
+        fs=("جاهزة", "تحت الفحص", "عطلانة"), fl_set="حالة الحافلة", fl_btn="تحديث الحالة", fl_alert="🚨 فيه حافلة عطلانة: تم إرسال فريق صيانة متنقل (محاكاة)",
+        dr_route="المسار: الحرم ← منى (محاكاة)", dr_dep="موعد الانطلاق", dr_done="اكتمل الركوب", dr_sos="بلاغ طوارئ",
+        dr_ok="تم تسجيل ركوب {n} معتمر", dr_sosm="تم إبلاغ الإدارة وتحويل الحافلة لحالة عطل (محاكاة)",
+        qr_ok="تم تسجيل حضورك", qr_note="الكود بيفتح التطبيق ويسجل الحضور (ببيانات الديمو فقط)", title="منصة التسكين والتفويج الذكي", sub="نموذج أولي تفاعلي · بيانات تجريبية فقط", hotel="الفندق",
         hotels=["فندق أنوار المدينة", "فندق أبراج الساعة", "فندق دار الضيافة"],
         tabs=["📊 لوحة المدير", "⚡ التسكين الذكي", "🚌 الحافلات", "📱 حضور QR", "💬 واتساب"],
         k=["إجمالي المعتمرين", "الغرف المشغولة", "حالات خاصة بالأدوار الأرضية", "نسبة الحضور"],
@@ -49,7 +57,15 @@ L = {
         foot="نموذج أولي تجريبي: كل البيانات والخرائط والإشعارات محاكاة. يسعدنا سماع تحدياتكم التشغيلية.",
         gm=dict(M="ذكر", F="أنثى")),
     "en": dict(
-        brand="Daly Track", by="Powered by", title="Smart Housing & Logistics Platform", sub="Interactive prototype · demo data only", hotel="Hotel",
+        brand="Daly Track", by="Powered by",
+        tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🛠 Fleet & maintenance",
+                driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="💬 WhatsApp"),
+        rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
+                              mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
+        fs=("Ready", "Inspection", "Broken down"), fl_set="Bus status", fl_btn="Update status", fl_alert="🚨 A bus is down: mobile maintenance team dispatched (simulated)",
+        dr_route="Route: Haram → Mina (simulated)", dr_dep="Departure", dr_done="Boarding complete", dr_sos="Emergency report",
+        dr_ok="{n} pilgrims marked as boarded", dr_sosm="Management notified and the bus marked as broken down (simulated)",
+        qr_ok="You are checked in", qr_note="The code opens the app and records check-in (demo data only)", title="Smart Housing & Logistics Platform", sub="Interactive prototype · demo data only", hotel="Hotel",
         hotels=["Anwar Al-Madinah Hotel", "Abraj Clock Hotel", "Dar Al-Diyafa Hotel"],
         tabs=["📊 Manager", "⚡ Smart housing", "🚌 Buses", "📱 QR check-in", "💬 WhatsApp"],
         k=["Total pilgrims", "Rooms in use", "Special cases on lower floors", "Check-in rate"],
@@ -102,6 +118,8 @@ html,body,.stApp{{font-family:'Tajawal',sans-serif}}
 .stTabs [aria-selected="true"]{{color:var(--pri)}}
 [data-baseweb="select"]>div,.stTextArea textarea,.stTimeInput input{{background:var(--card)!important;color:var(--ink)!important}}
 .ttl{{border-bottom:3px solid var(--gold);display:inline-block;padding-bottom:4px;margin:0}}
+.st-key-hid_pages{{display:none}}
+.chip{{padding:3px 12px;border-radius:12px;font-size:13px;font-weight:700;display:inline-block}}
 </style>""", unsafe_allow_html=True)
 
 # ---------- DATA ----------
@@ -223,11 +241,51 @@ def card(label, value, extra=""):
     return f"<div class='card'><small>{label}</small><b>{value}</b><small>{extra}</small></div>"
 
 
+APP_URL = "https://hajj-demo-app-7fkifuz3mr3zgtohpqnlqi.streamlit.app/"
+
+
+@st.cache_resource
+def _shared():
+    return {}
+
+
+def box(k):
+    return _shared().setdefault(k, dict(checked=set(), log=[], msgs=None, fleet={}))
+
+
+def fstat(b, n):
+    return b["fleet"].get(n, "check" if n % 4 == 0 else "ok")
+
+
+qp = st.query_params
+if "pid" in qp:  # opened by scanning a pilgrim QR code
+    hq = int(qp["h"]) if str(qp.get("h", "0")).isdigit() and int(qp["h"]) < 3 else 0
+    dq, bq = alloc(demo(hq + 7)), box(hq)
+    rw = dq[dq.pid == qp["pid"]]
+    if rw.empty:
+        st.error("QR ?")
+    else:
+        r0 = rw.iloc[0]
+        if r0.pid not in bq["checked"]:
+            bq["checked"].add(r0.pid)
+            bq["log"].insert(0, f"{r0.pid} · {r0[NM]} · {T['bus']} {r0.bus}")
+        st.markdown(f"<h1 class='ttl'>🕋 {T['brand']}</h1>", unsafe_allow_html=True)
+        st.markdown(card(T["qr_ok"], f"✅ {r0[NM]}", f"{r0.pid} · {T['bus']} {r0.bus}"), unsafe_allow_html=True)
+    st.stop()
+
 # ---------- TOP BAR ----------
-c1, c2, c3 = st.columns([8, 1, 1])
+c1, c2, c3, c4 = st.columns([8, 1, 1, 1])
 c1.markdown(f"<h1 class='ttl'>🕋 {T['brand']}</h1><br><small style='color:var(--mute)'>{T['title']} · {T['sub']}</small>", unsafe_allow_html=True)
 c2.button("☀️" if s.dark else "🌙", key="tg_dark", on_click=lambda: s.update(dark=not s.dark))
 c3.button("EN" if AR else "ع", key="tg_lang", on_click=lambda: s.update(lang="en" if AR else "ar"))
+c4.button("🔁", key="tg_role", on_click=lambda: s.update(role=None), help=T["sw"])
+if not s.get("role"):
+    st.markdown(f"### {T['rl'][0]}")
+    for col, k_ in zip(st.columns(3), ("hotel", "bus", "mgr")):
+        nm_, ds_ = T["rl"][1][k_]
+        col.markdown(f"<div class='card'><b style='font-size:22px'>{nm_}</b><small>{ds_}</small></div>", unsafe_allow_html=True)
+        col.button(nm_, key=f"role_{k_}", on_click=lambda k=k_: s.update(role=k))
+    st.stop()
 
 hi = st.selectbox(T["hotel"], range(3), format_func=lambda i: T["hotels"][i])
 up = st.file_uploader(T["up"], type=["csv", "xlsx"])
@@ -235,24 +293,38 @@ raw, bad = load(up, hi + 7)
 if bad:
     st.warning(T["bad"])
 d = alloc(raw)
-sig = (hi, len(d), d.pid.iloc[0], d.name_en.iloc[0])
-if s.get("sig") != sig:
-    s.update(sig=sig, checked=set(), log=[], msgs=None)
+bx = box(hi if up is None else ("up", up.name))
+if s.role == "mgr":
+    st.button(T["rst"], key="rst", on_click=lambda: bx.update(checked=set(), log=[], msgs=None, fleet={}))
+
+
+def mark(pids):
+    nmap, bmap = d.set_index("pid")[NM], d.set_index("pid").bus
+    for p in pids:
+        if p not in bx["checked"]:
+            bx["checked"].add(p)
+            bx["log"].insert(0, f"{p} · {nmap[p]} · {T['bus']} {bmap[p]}")
+
 
 nb = int(d.bus.max())
 tot = len(d)
 placed = int((d.room != "").sum())
-boarded = d[d.pid.isin(s.checked)].groupby("bus").size()
+boarded = d[d.pid.isin(bx["checked"])].groupby("bus").size()
 by_bus = d[d.bus > 0].groupby("bus").size()
-tabs = st.tabs(T["tabs"])
+ROLE = dict(hotel=["dash", "house"], bus=["fleet", "buses", "driver", "qr", "wa"],
+            mgr=["dash", "house", "buses", "fleet", "driver", "qr", "wa"])
+keys = ROLE[s.role]
+tb = st.tabs([T["tn"][k] for k in keys])
+HID = st.container(key="hid_pages")
+TB = {k: (tb[keys.index(k)] if k in keys else HID) for k in ("dash", "house", "buses", "fleet", "driver", "qr", "wa")}
 
 # ---------- 1. DASHBOARD ----------
-with tabs[0]:
+with TB["dash"]:
     k = st.columns(4)
     used = d[d.room != ""].room.nunique()
     low = int(((d.special) & (d.floor.between(1, 2))).sum())
     vals = [(tot, f"{placed}/{tot}"), (f"{used}/100", ""), (low, f"/ {int(d.special.sum())}"),
-            (f"{len(s.checked) / tot:.0%}", f"{len(s.checked)}/{tot}")]
+            (f"{len(bx["checked"]) / tot:.0%}", f"{len(bx["checked"])}/{tot}")]
     for col, lab, (v, ex) in zip(k, T["k"], vals):
         col.markdown(card(lab, v, ex), unsafe_allow_html=True)
     occ = d[d.room != ""].groupby("room").size()
@@ -275,8 +347,8 @@ with tabs[0]:
         kind = np.where(dd.special, 3, np.where(dd.family != "", 0, np.where(dd.gender == "M", 1, 2)))
         donut(T["ty"], [int((kind == k_).sum()) for k_ in range(4)], T["ch"][1], len(dd))
     with g3:
-        rate = len(s.checked) / tot
-        donut(T["ok"], [len(s.checked), tot - len(s.checked)], T["ch"][2], f"{rate:.0%}")
+        rate = len(bx["checked"]) / tot
+        donut(T["ok"], [len(bx["checked"]), tot - len(bx["checked"])], T["ch"][2], f"{rate:.0%}")
     h1, h2, h3 = st.columns(3)
     with h1:
         pf = [int((d.floor == f).sum()) / sum(CAPS) for f in fl_rng]
@@ -318,7 +390,7 @@ with tabs[0]:
     st.markdown(f"<div class='card'>{bld}<div style='margin-top:12px'>{lg}</div></div>", unsafe_allow_html=True)
 
 # ---------- 2. HOUSING ----------
-with tabs[1]:
+with TB["house"]:
     a, b = st.columns([2, 1])
     smp = raw.head(25).rename(columns={"name_en": "name"})[["name", "family", "gender", "age", "health"]]
     b.download_button(T["smp"], to_xlsx(smp), "sample_pilgrims.xlsx", key="dl_smp")
@@ -340,7 +412,7 @@ with tabs[1]:
         st.info(T["hint"])
 
 # ---------- 3. BUSES ----------
-with tabs[2]:
+with TB["buses"]:
     rows, ratios = "", []
     for n in range(1, nb + 1):
         t_, b_ = int(by_bus.get(n, 0)), int(boarded.get(n, 0))
@@ -356,46 +428,39 @@ with tabs[2]:
     st.map(pts, size=150, color=C["pri"])
 
 # ---------- 4. QR CHECK-IN ----------
-with tabs[3]:
+with TB["qr"]:
     names = d.set_index("pid")[NM]
     a, b = st.columns([1, 1])
     with a:
         sel = st.selectbox(T["pick"], d.pid, format_func=lambda p: f"{p} · {names[p]}")
         buf = io.BytesIO()
-        qrcode.make(sel).save(buf, "PNG")
+        qrcode.make(f"{APP_URL}?pid={sel}&h={hi}").save(buf, "PNG")
         st.image(buf.getvalue(), width=200)
-        busmap = d.set_index("pid").bus
-
-        def mark(pids):
-            for p in pids:
-                if p not in s.checked:
-                    s.checked.add(p)
-                    s.log.insert(0, f"{p} · {names[p]} · {T['bus']} {busmap[p]}")
-
+        st.caption(T["qr_note"])
         if st.button(T["scan"], key="scan"):
             mark([sel])
         if st.button(T["scan10"], key="scan10"):
-            mark([p for p in d[d.bus > 0].pid if p not in s.checked][:10])
+            mark([p for p in d[d.bus > 0].pid if p not in bx["checked"]][:10])
     with b:
-        rate = len(s.checked) / tot
-        st.markdown(card(T["att"], f"{len(s.checked)}/{tot}", f"{rate:.0%}"), unsafe_allow_html=True)
+        rate = len(bx["checked"]) / tot
+        st.markdown(card(T["att"], f"{len(bx["checked"])}/{tot}", f"{rate:.0%}"), unsafe_allow_html=True)
         st.progress(rate)
         st.markdown(f"**{T['log']}**")
-        for line in s.log[:6]:
+        for line in bx["log"][:6]:
             st.write("✅ " + line)
 
 # ---------- 5. WHATSAPP ----------
-with tabs[4]:
+with TB["wa"]:
     a, b = st.columns([1, 1])
     with a:
         wb = st.selectbox(T["wa_bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}")
         wt = st.time_input(T["wa_time"], value=dtime(14, 0))
         tpl = st.text_area(T["wa_tpl"], T["wa_msg"], height=110)
         if st.button(T["wa_btn"], key="wa"):
-            s.msgs = (wb, tpl, wt.strftime("%H:%M"))
+            bx["msgs"] = (wb, tpl, wt.strftime("%H:%M"))
     with b:
-        if s.get("msgs"):
-            mb, mt, mtime = s.msgs
+        if bx["msgs"]:
+            mb, mt, mtime = bx["msgs"]
             mem = d[d.bus == mb]
             bub = "".join(
                 f"<div class='bub'>{html.escape(mt.replace('{name}', nm_).replace('{bus}', f'{T['bus']} {mb}').replace('{time}', mtime))}</div>"
@@ -403,5 +468,40 @@ with tabs[4]:
             st.markdown(f"<div class='phone'>{bub}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='card' style='margin-top:14px'><b>{len(mem)}</b><small>{T['wa_q']}</small></div>",
                         unsafe_allow_html=True)
+
+
+# ---------- FLEET ----------
+OKS = ("ok", "check", "down")
+with TB["fleet"]:
+    fs_ = [fstat(bx, n) for n in range(1, nb + 1)]
+    for col, code, lab in zip(st.columns(3), OKS, T["fs"]):
+        col.markdown(card(lab, fs_.count(code)), unsafe_allow_html=True)
+    if "down" in fs_:
+        st.warning(T["fl_alert"])
+    bgc, fgc = dict(ok="#E7CF8A", check="#F3EAD3", down="#1B1B1B"), dict(ok="#10343A", check="#10343A", down="#FFFFFF")
+    frows = "".join(
+        f"<div class='row'><b>{T['bus']} {n}</b><span class='chip' style='background:{bgc[c_]};color:{fgc[c_]}'>"
+        f"{T['fs'][OKS.index(c_)]}</span><span>{int(by_bus.get(n, 0))}</span><span></span></div>"
+        for n, c_ in zip(range(1, nb + 1), fs_))
+    st.markdown(f"<div class='card' style='margin-top:12px'>{frows}</div>", unsafe_allow_html=True)
+    fa, fb2 = st.columns(2)
+    fbus = fa.selectbox(T["bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}", key="fl_bus")
+    fnew = fb2.selectbox(T["fl_set"], OKS, format_func=lambda c: T["fs"][OKS.index(c)], key="fl_new")
+    st.button(T["fl_btn"], key="fl_go", on_click=lambda: bx["fleet"].__setitem__(fbus, fnew))
+
+# ---------- DRIVER / SUPERVISOR ----------
+with TB["driver"]:
+    dbus = st.selectbox(T["bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}", key="drv_bus")
+    mem_ = d[d.bus == dbus]
+    da, db_ = st.columns(2)
+    if da.button(T["dr_done"], key="dr_done"):
+        mark(list(mem_.pid))
+        st.success(T["dr_ok"].format(n=len(mem_)))
+    if db_.button(T["dr_sos"], key="dr_sos"):
+        bx["fleet"][dbus] = "down"
+        st.error(T["dr_sosm"])
+    dep = bx["msgs"][2] if bx["msgs"] and bx["msgs"][0] == dbus else "14:00"
+    nbd = int(d[d.pid.isin(bx["checked"]) & (d.bus == dbus)].shape[0])
+    st.markdown(card(f"{T['bus']} {dbus}", f"{nbd}/{len(mem_)}", f"{T['dr_route']} · {T['dr_dep']} {dep}"), unsafe_allow_html=True)
 
 st.markdown(f"<p style='text-align:center;color:var(--mute);margin-top:32px'>{T['foot']}<br><b style='color:var(--pri)'>{T['by']} {T['brand']}</b></p>", unsafe_allow_html=True)

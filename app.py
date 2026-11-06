@@ -6,6 +6,7 @@ from datetime import time as dtime
 
 import numpy as np
 import pandas as pd
+import plotly.express as px
 import qrcode
 import streamlit as st
 
@@ -31,7 +32,7 @@ L = {
         hotels=["فندق أنوار المدينة", "فندق أبراج الساعة", "فندق دار الضيافة"],
         tabs=["📊 لوحة المدير", "⚡ التسكين الذكي", "🚌 الحافلات", "📱 حضور QR", "💬 واتساب"],
         k=["إجمالي المعتمرين", "الغرف المشغولة", "حالات خاصة بالأدوار الأرضية", "نسبة الحضور"],
-        heat="مبنى الفندق: إشغال الغرف", lg=("فاضية", "فيها أماكن", "مليانة", "حالة خاصة"), fb="الإشغال حسب الدور", fl="الدور", rm="الغرفة",
+        heat="خريطة حرارية لإشغال الغرف", fl="الدور", rm="الغرفة",
         up="ارفع كشف المعتمرين (Excel/CSV) ببيانات تجريبية فقط", smp="تحميل نموذج Excel",
         run="تشغيل التسكين الذكي", spin="جاري تطبيق قواعد التسكين...", res="نتيجة التسكين",
         dl="تحميل كشف الغرف (Excel)", hint="اضغط تشغيل التسكين لعرض النتيجة.",
@@ -51,7 +52,7 @@ L = {
         hotels=["Anwar Al-Madinah Hotel", "Abraj Clock Hotel", "Dar Al-Diyafa Hotel"],
         tabs=["📊 Manager", "⚡ Smart housing", "🚌 Buses", "📱 QR check-in", "💬 WhatsApp"],
         k=["Total pilgrims", "Rooms in use", "Special cases on lower floors", "Check-in rate"],
-        heat="Hotel building: room occupancy", lg=("Empty", "Has space", "Full", "Special case"), fb="Occupancy by floor", fl="Floor", rm="Room",
+        heat="Room occupancy heatmap", fl="Floor", rm="Room",
         up="Upload pilgrim list (Excel/CSV), demo data only", smp="Download sample Excel",
         run="Run smart housing", spin="Applying housing rules...", res="Housing result",
         dl="Download room list (Excel)", hint="Press Run to see the result.",
@@ -88,11 +89,7 @@ html,body,.stApp{{font-family:'Tajawal',sans-serif}}
  box-shadow:0 10px 24px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.35)}}
 .card small{{color:var(--mute);font-size:14px}} .card b{{display:block;font-size:32px;color:var(--pri);line-height:1.3}}
 .bar{{height:12px;background:var(--line);border-radius:8px;overflow:hidden;box-shadow:inset 0 2px 3px rgba(0,0,0,.2)}}
-.bar i{{display:block;height:100%;background:linear-gradient(90deg,#E7CF8A,#C9A227)}}
-.fl{{display:grid;grid-template-columns:28px repeat(10,1fr);gap:6px;align-items:center;margin:5px 0;color:var(--ink)}}
-.rm{{height:28px;border-radius:6px;box-shadow:0 3px 0 rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.45)}}
-.lg{{margin-inline-end:16px;font-size:13px;color:var(--mute)}}
-.lg i{{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:6px;vertical-align:middle;border:1px solid var(--gold)}}
+.bar i{{display:block;height:100%;background:linear-gradient(90deg,var(--pri2),var(--pri),var(--sand))}}
 .row{{display:grid;grid-template-columns:110px 1fr 120px 90px;gap:12px;align-items:center;margin:12px 0;color:var(--ink)}}
 .phone{{max-width:360px;margin:auto;background:#0B141A;border-radius:28px;padding:16px;border:6px solid #222;box-shadow:0 18px 40px rgba(0,0,0,.35)}}
 .bub{{background:#005C4B;color:#E9EDEF;border-radius:10px 10px 10px 2px;padding:8px 10px;margin:8px 0;font-size:14px}}
@@ -157,7 +154,7 @@ def alloc(d):
     d = d.reset_index(drop=True)
     rooms = [dict(id=f"{f}{i + 1:02d}", floor=f, cap=c, occ=[], g=None) for f in range(1, 11) for i, c in enumerate(CAPS)]
     free = lambda x: x["cap"] - len(x["occ"])
-    fams = sorted(d[d.family != ""].groupby("family"), key=lambda x: (-int(x[1].special.any()), -len(x[1])))
+    fams = sorted(d[d.family != ""].groupby("family"), key=lambda x: (-x[1].special.any(), -len(x[1])))
     for _, g in fams:
         sp, ids = g.special.any(), list(g.index)
         while ids:
@@ -232,33 +229,14 @@ with tabs[0]:
     for col, lab, (v, ex) in zip(k, T["k"], vals):
         col.markdown(card(lab, v, ex), unsafe_allow_html=True)
     occ = d[d.room != ""].groupby("room").size()
-    spr = set(d[(d.room != "") & d.special].room)
-    tone = [C["line"] if s.dark else "#F3EAD3", "#E7CF8A", GOLD]
-
-    def cell(f, i):
-        rid, n_, cp = f"{f}{i + 1:02d}", int(occ.get(f"{f}{i + 1:02d}", 0)), CAPS[i]
-        if rid in spr:
-            bg, bd = "#1B1B1B", f"2px solid {GOLD}"
-        else:
-            bg, bd = tone[0 if n_ == 0 else 2 if n_ >= cp else 1], "0"
-        return f"<div class='rm' title='{rid}: {n_}/{cp}' style='background:{bg};border:{bd}'></div>"
-
-    bld = "".join(f"<div class='fl'><span>{f}</span>" + "".join(cell(f, i) for i in range(10)) + "</div>"
-                  for f in range(10, 0, -1))
-    lg = "".join(f"<span class='lg'><i style='background:{c_}'></i>{t_}</span>"
-                 for c_, t_ in zip(tone + ["#1B1B1B"], T["lg"]))
-    fb = ""
-    for f in range(10, 0, -1):
-        cap_f, n_f = sum(CAPS), int((d.floor == f).sum())
-        sp_f = int(((d.floor == f) & d.special).sum())
-        fb += (f"<div class='row'><b>{T['fl']} {f}</b><div class='bar'><i style='width:{n_f / cap_f * 100:.0f}%'></i></div>"
-               f"<span>{n_f}/{cap_f}</span><span>★ {sp_f}</span></div>")
-    st.write("")
-    ca, cb = st.columns([3, 2])
-    ca.markdown(f"### {T['heat']}")
-    ca.markdown(f"<div class='card'>{bld}<div style='margin-top:12px'>{lg}</div></div>", unsafe_allow_html=True)
-    cb.markdown(f"### {T['fb']}")
-    cb.markdown(f"<div class='card'>{fb}</div>", unsafe_allow_html=True)
+    M = np.array([[occ.get(f"{f}{i + 1:02d}", 0) / CAPS[i] for i in range(10)] for f in range(10, 0, -1)])
+    fig = px.imshow(M, x=[str(i + 1) for i in range(10)], y=[str(f) for f in range(10, 0, -1)],
+                    color_continuous_scale=[C["sand"], C["pri"], C["pri2"]], zmin=0, zmax=1, text_auto=".0%",
+                    aspect="auto", labels=dict(x=T["rm"], y=T["fl"], color=""))
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color=C["ink"],
+                      margin=dict(l=0, r=0, t=10, b=0), height=430)
+    st.markdown(f"### {T['heat']}")
+    st.plotly_chart(fig, use_container_width=True)
 
 # ---------- 2. HOUSING ----------
 with tabs[1]:

@@ -42,11 +42,21 @@ L = {
              "مسافة الرحلة (كم)", "تكلفة تشغيل الحافلة في الموسم (ر.س)", "سعر العقد للمعتمر (ر.س)", "تكاليف ثابتة (ر.س)",
              "الإيراد", "التكلفة", "صافي الربح", "هامش الربح", "الوقود", "التشغيل", "ثابتة", "الإيراد مقابل التكلفة",
              "الأرقام افتراضية وتتغير بالمدخلات، وليست بيانات حقيقية."),
-        tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🚨 غرفة العمليات",
+        tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🚨 غرفة العمليات", energy="🔋 الطاقة والأسطول",
                 driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="📣 الإشعارات"),
         rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
                               mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
         fs=("جاهزة", "تحت الفحص", "عطلانة"), fl_set="حالة الحافلة", fl_btn="تحديث الحالة", fl_alert="🚨 فيه حافلة عطلانة: تم إرسال فريق صيانة متنقل (محاكاة)",
+        eg=("كفاءة الأسطول", "مقاعد الحافلة", "نسبة الركوب الفعلي", "حافلات لازمة بهذه السعة", "السعة المطلوبة لو قلّلنا حافلة",
+            "نسبة الركوب محسوبة من عمليات الحضور الحالية (محاكاة).",
+            "حاسبة الطاقة (قيم افتراضية للتوضيح)", "سعر لتر الوقود (ر.س)", "استهلاك الديزل (لتر/100 كم)", "استهلاك الكهرباء (kWh/100 كم)",
+            "سعر الكيلوواط ساعة (ر.س)", "رحلات الحافلة في الموسم", "مسافة الرحلة (كم)", "نسبة الكيلومترات الكهربائية في الهجين (%)",
+            ("ديزل", "كهرباء", "هجين"), "تكلفة الطاقة للأسطول (ر.س)", "إضافة تقدير الانبعاثات", "كجم CO₂ لكل لتر ديزل", "كجم CO₂ لكل kWh",
+            "الانبعاثات التقديرية (طن CO₂)", "فحص المدى", "سعة البطارية (kWh)", "احتياطي أمان (%)", "مسافة الرحلة (كم)", "المدى المتاح (كم)",
+            "المدى كافٍ للرحلة", "المدى غير كافٍ للرحلة",
+            "كل القيم افتراضية للتوضيح وليست بيانات حقيقية. في الهجين، الكيلومترات غير الكهربائية بنفس استهلاك الديزل (تبسيط). معاملات الانبعاثات تقديرية وقابلة للتعديل.",
+            "فحص مبسّط: لا يشمل التكييف ولا التضاريس ولا الحمولة. القيم افتراضية والبيانات وهمية (محاكاة).",
+            "الحافلات الحالية"),
         sla_t="مهلة توفير حافلة بديلة", sla_lbl="مهلة البديلة (دقيقة)", sla_left="المتبقي", sla_over="متأخرة بـ", sla_exp="انتهت المهلة",
         sla_note="المهلة قابلة للضبط، والقيمة الافتراضية (60 دقيقة) للتوضيح فقط وليست لائحة رسمية، والبيانات وهمية (محاكاة).",
         dr_route="المسار: الحرم ← منى (محاكاة)", dr_dep="موعد الانطلاق", dr_done="اكتمل الركوب", dr_sos="بلاغ طوارئ",
@@ -80,11 +90,21 @@ L = {
              "Trip distance (km)", "Bus operating cost per season (SAR)", "Contract price per pilgrim (SAR)", "Fixed costs (SAR)",
              "Revenue", "Cost", "Net profit", "Profit margin", "Fuel", "Operations", "Fixed", "Revenue vs cost",
              "Figures are illustrative and change with the inputs; they are not real data."),
-        tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🚨 Operations room",
+        tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🚨 Operations room", energy="🔋 Energy & fleet",
                 driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="📣 Announcements"),
         rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
                               mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
         fs=("Ready", "Inspection", "Broken down"), fl_set="Bus status", fl_btn="Update status", fl_alert="🚨 A bus is down: mobile maintenance team dispatched (simulated)",
+        eg=("Fleet efficiency", "Seats per bus", "Actual boarding rate", "Buses needed at this capacity", "Seats needed with one fewer bus",
+            "Boarding rate is computed from current check-in operations (simulated).",
+            "Energy calculator (illustrative defaults)", "Fuel price per liter (SAR)", "Diesel consumption (L/100 km)", "Electric consumption (kWh/100 km)",
+            "Electricity price per kWh (SAR)", "Trips per bus per season", "Trip distance (km)", "Electric share of km in hybrid (%)",
+            ("Diesel", "Electric", "Hybrid"), "Fleet energy cost (SAR)", "Add emissions estimate", "kg CO₂ per liter of diesel", "kg CO₂ per kWh",
+            "Estimated emissions (tonnes CO₂)", "Range check", "Battery capacity (kWh)", "Safety reserve (%)", "Trip distance (km)", "Available range (km)",
+            "Range is sufficient for the trip", "Range is not sufficient for the trip",
+            "All values are illustrative defaults, not real data. In hybrid, the non-electric km use the diesel consumption (simplification). Emission factors are estimates and editable.",
+            "Simplified check: excludes A/C, terrain and load. Values are illustrative and data is simulated.",
+            "Current buses"),
         sla_t="Replacement bus deadline", sla_lbl="Replacement deadline (min)", sla_left="Remaining", sla_over="Overdue by", sla_exp="Deadline passed",
         sla_note="The deadline is adjustable; the default (60 min) is illustrative only, not an official regulation. Data is simulated.",
         dr_route="Route: Haram → Mina (simulated)", dr_dep="Departure", dr_done="Boarding complete", dr_sos="Emergency report",
@@ -241,6 +261,38 @@ def to_xlsx(df):
 
 
 PAL = [GOLD, "#E7CF8A", "#F3EAD3", "#1B1B1B"]
+
+
+# ---------- ENERGY LOGIC: pure functions, no Streamlit calls (to be moved to energy.py after the expo) ----------
+def ceil_div(a, b):
+    return -(-int(a) // int(b)) if b and b > 0 else 0
+
+
+def buses_needed(total, seats):
+    return ceil_div(total, seats)
+
+
+def seats_for_n_buses(total, n):
+    return ceil_div(total, n)
+
+
+def fill_rate(boarded_n, seats):
+    return boarded_n / seats if seats > 0 else 0.0
+
+
+def season_energy(n_buses, trips, km, l100, kwh100, fuel_price, kwh_price, ev_share, co2_l, co2_kwh):
+    km_all = n_buses * trips * km
+    d_l = km_all * l100 / 100
+    e_k = km_all * kwh100 / 100
+    h_l, h_k = km_all * (1 - ev_share) * l100 / 100, km_all * ev_share * kwh100 / 100
+    return dict(diesel=dict(cost=d_l * fuel_price, co2=d_l * co2_l),
+                electric=dict(cost=e_k * kwh_price, co2=e_k * co2_kwh),
+                hybrid=dict(cost=h_l * fuel_price + h_k * kwh_price, co2=h_l * co2_l + h_k * co2_kwh))
+
+
+def range_check(battery_kwh, kwh100, reserve_pct, trip_km):
+    rng = battery_kwh * (1 - reserve_pct / 100) / kwh100 * 100 if kwh100 > 0 else 0.0
+    return rng, rng >= trip_km
 
 
 def show(fig, h=290, donut=None):
@@ -408,12 +460,12 @@ tot = len(d)
 placed = int((d.room != "").sum())
 boarded = d[d.pid.isin(bx["checked"])].groupby("bus").size()
 by_bus = d[d.bus > 0].groupby("bus").size()
-ROLE = dict(hotel=["dash", "house"], bus=["fleet", "buses", "driver", "qr", "wa"],
-            mgr=["dash", "house", "buses", "fleet", "driver", "qr", "wa"])
+ROLE = dict(hotel=["dash", "house"], bus=["fleet", "energy", "buses", "driver", "qr", "wa"],
+            mgr=["dash", "house", "buses", "fleet", "energy", "driver", "qr", "wa"])
 keys = ROLE[s.role]
 tb = st.tabs([T["tn"][k] for k in keys])
 HID = st.container(key="hid_pages")
-TB = {k: (tb[keys.index(k)] if k in keys else HID) for k in ("dash", "house", "buses", "fleet", "driver", "qr", "wa")}
+TB = {k: (tb[keys.index(k)] if k in keys else HID) for k in ("dash", "house", "buses", "fleet", "energy", "driver", "qr", "wa")}
 
 # ---------- 1. DASHBOARD ----------
 with TB["dash"]:
@@ -660,6 +712,73 @@ with TB["fleet"]:
     if s.role == "mgr":
         bx["sla_min"] = int(st.number_input(T["sla_lbl"], 5, 240, int(bx["sla_min"]), 5, key="sla_in"))
     ops_feed()
+
+# ---------- ENERGY & FLEET ----------
+with TB["energy"]:
+    if "energy" in keys:
+        G = T["eg"]
+        st.markdown(f"### {G[0]}")
+        e1, e2 = st.columns(2)
+        seats = e1.slider(G[1], 20, 60, 45, key="e_seats")
+        tot_b = int(by_bus.sum())
+        e2.markdown(card(G[29], nb), unsafe_allow_html=True)
+        need_b = buses_needed(tot_b, seats)
+        seats_less = seats_for_n_buses(tot_b, nb - 1) if nb > 1 else 0
+        for col, lab, v, ex in zip(st.columns(2), (G[3], G[4]), (need_b, seats_less or "-"),
+                                   (f"/ {nb}", f"{seats_less - seats:+d}" if seats_less else "")):
+            col.markdown(card(lab, v, ex), unsafe_allow_html=True)
+        frs = "".join(
+            f"<div class='row'><b>{T['bus']} {n}</b><span>{fill_rate(int(boarded.get(n, 0)), seats):.0%}</span>"
+            f"<span>{int(boarded.get(n, 0))}</span><span>{int(by_bus.get(n, 0))}</span></div>"
+            for n in range(1, nb + 1))
+        st.markdown(f"<div class='card' style='margin-top:12px'><small>{G[2]}</small>{frs}</div>", unsafe_allow_html=True)
+        st.caption(G[5])
+
+        st.markdown(f"### {G[6]}")
+        g1, g2, g3, g4 = st.columns(4)
+        ep = g1.slider(G[7], 1.0, 4.0, 2.0, 0.1, key="e_fp")
+        el = g2.slider(G[8], 20, 60, 35, key="e_l")
+        ek = g3.slider(G[9], 60, 200, 120, 5, key="e_k")
+        ekp = g4.slider(G[10], 0.05, 1.0, 0.30, 0.05, key="e_kp")
+        h1, h2, h3 = st.columns(3)
+        et = h1.slider(G[11], 10, 200, 60, key="e_t")
+        ed = h2.slider(G[12], 5, 100, 25, key="e_d")
+        esh = h3.slider(G[13], 0, 100, 50, 5, key="e_sh")
+        em_on = st.toggle(G[16], key="e_em")
+        cl, ck = 2.7, 0.5
+        if em_on:
+            m1, m2 = st.columns(2)
+            cl = m1.slider(G[17], 1.0, 4.0, 2.7, 0.1, key="e_cl")
+            ck = m2.slider(G[18], 0.0, 1.0, 0.5, 0.05, key="e_ck")
+        res = season_energy(nb, et, ed, el, ek, ep, ekp, esh / 100, cl, ck)
+        modes = ("diesel", "electric", "hybrid")
+        z1, z2 = st.columns(2)
+        with z1:
+            fe = px.bar(x=list(G[14]), y=[res[m]["cost"] for m in modes], color_discrete_sequence=[GOLD], title=G[15],
+                        text=[f"{res[m]['cost']:,.0f}" for m in modes])
+            fe.update_traces(textposition="outside", marker_cornerradius=6)
+            fe.update_xaxes(title=None)
+            fe.update_yaxes(title=None)
+            show(fe)
+        if em_on:
+            with z2:
+                fc2 = px.bar(x=list(G[14]), y=[res[m]["co2"] / 1000 for m in modes], color_discrete_sequence=[GOLD], title=G[19],
+                             text=[f"{res[m]['co2'] / 1000:,.1f}" for m in modes])
+                fc2.update_traces(textposition="outside", marker_cornerradius=6)
+                fc2.update_xaxes(title=None)
+                fc2.update_yaxes(title=None)
+                show(fc2)
+        st.caption(G[27])
+
+        st.markdown(f"### {G[20]}")
+        r1_, r2_, r3_ = st.columns(3)
+        bk = r1_.slider(G[21], 100, 600, 300, 10, key="e_bk")
+        rs = r2_.slider(G[22], 0, 50, 20, key="e_rs")
+        td = r3_.slider(G[23], 5, 300, ed, key="e_td")
+        rg, okr = range_check(bk, ek, rs, td)
+        st.markdown(card(G[24], f"{rg:,.0f}", f"{td} km"), unsafe_allow_html=True)
+        (st.success if okr else st.error)(G[25] if okr else G[26])
+        st.caption(G[28])
 
 # ---------- DRIVER / SUPERVISOR ----------
 with TB["driver"]:

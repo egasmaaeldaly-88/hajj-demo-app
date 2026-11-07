@@ -47,6 +47,8 @@ L = {
         rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
                               mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
         fs=("جاهزة", "تحت الفحص", "عطلانة"), fl_set="حالة الحافلة", fl_btn="تحديث الحالة", fl_alert="🚨 فيه حافلة عطلانة: تم إرسال فريق صيانة متنقل (محاكاة)",
+        sla_t="مهلة توفير حافلة بديلة", sla_lbl="مهلة البديلة (دقيقة)", sla_left="المتبقي", sla_over="متأخرة بـ", sla_exp="انتهت المهلة",
+        sla_note="المهلة قابلة للضبط، والقيمة الافتراضية (60 دقيقة) للتوضيح فقط وليست لائحة رسمية، والبيانات وهمية (محاكاة).",
         dr_route="المسار: الحرم ← منى (محاكاة)", dr_dep="موعد الانطلاق", dr_done="اكتمل الركوب", dr_sos="بلاغ طوارئ",
         dr_ok="تم تسجيل ركوب {n} معتمر", dr_sosm="تم إبلاغ الإدارة وتحويل الحافلة لحالة عطل (محاكاة)",
         qr_ok="تم تسجيل حضورك", qr_note="الكود بيفتح التطبيق ويسجل الحضور (ببيانات الديمو فقط)", title="منصة التسكين والتفويج الذكي", sub="نموذج أولي تفاعلي · بيانات تجريبية فقط", hotel="الفندق",
@@ -83,6 +85,8 @@ L = {
         rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
                               mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
         fs=("Ready", "Inspection", "Broken down"), fl_set="Bus status", fl_btn="Update status", fl_alert="🚨 A bus is down: mobile maintenance team dispatched (simulated)",
+        sla_t="Replacement bus deadline", sla_lbl="Replacement deadline (min)", sla_left="Remaining", sla_over="Overdue by", sla_exp="Deadline passed",
+        sla_note="The deadline is adjustable; the default (60 min) is illustrative only, not an official regulation. Data is simulated.",
         dr_route="Route: Haram → Mina (simulated)", dr_dep="Departure", dr_done="Boarding complete", dr_sos="Emergency report",
         dr_ok="{n} pilgrims marked as boarded", dr_sosm="Management notified and the bus marked as broken down (simulated)",
         qr_ok="You are checked in", qr_note="The code opens the app and records check-in (demo data only)", title="Smart Housing & Logistics Platform", sub="Interactive prototype · demo data only", hotel="Hotel",
@@ -276,6 +280,8 @@ def _shared():
 def box(k):
     b = _shared().setdefault(k, dict(checked=set(), log=[], msgs=None, fleet={}))
     b.setdefault("inc", [])
+    b.setdefault("down_at", {})
+    b.setdefault("sla_min", 60)
     return b
 
 
@@ -336,7 +342,7 @@ if bad:
 d = alloc(raw)
 bx = box(hi if up is None else ("up", up.name))
 if s.role == "mgr":
-    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[]), s.update(queue=[])))
+    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[], down_at={}, sla_min=60), s.update(queue=[])))
 
 
 NMAP, BMAP = d.set_index("pid")[NM], d.set_index("pid").bus
@@ -351,6 +357,10 @@ def commit(item):
     else:
         _, b_, st_, kind, ts = item
         bx["fleet"][b_] = st_
+        if st_ == "down":
+            bx["down_at"].setdefault(b_, time.time())
+        else:
+            bx["down_at"].pop(b_, None)
         bx["inc"].insert(0, (ts, b_, kind, st_))
 
 
@@ -604,6 +614,28 @@ def ops_feed():
         col.markdown(card(lab, fs_.count(code)), unsafe_allow_html=True)
     if "down" in fs_:
         st.warning(T["fl_alert"])
+    now_ = time.time()
+    srows = ""
+    for n_ in range(1, nb + 1):
+        t0_ = bx["down_at"].get(n_)
+        if fstat(bx, n_) != "down" or t0_ is None:
+            continue
+        left_ = int(bx["sla_min"] * 60 - (now_ - t0_))
+        mm_, ss_ = divmod(abs(left_), 60)
+        hh_, mm_ = divmod(mm_, 60)
+        clk_ = f"{hh_:02d}:{mm_:02d}:{ss_:02d}"
+        if left_ < 0:
+            sc_, tx_ = "background:#7A1412;color:#FFFFFF;", f"{T['sla_exp']} · {T['sla_over']} {clk_}"
+        elif left_ < 900:
+            sc_, tx_ = "background:rgba(180,42,39,.14);color:#B42A27;font-weight:700;", f"{T['sla_left']} {clk_}"
+        else:
+            sc_, tx_ = "background:#F3EAD3;color:#10343A;", f"{T['sla_left']} {clk_}"
+        srows += (f"<div class='row' style='border-radius:8px;padding:4px 8px;{sc_}'>"
+                  f"<b>{T['bus']} {n_}</b><span>{tx_}</span><span></span><span></span></div>")
+    if srows:
+        st.markdown(f"### {T['sla_t']}")
+        st.markdown(f"<div class='card'>{srows}</div>", unsafe_allow_html=True)
+        st.caption(T["sla_note"])
     bgc, fgc = dict(ok="#E7CF8A", check="#F3EAD3", down="#1B1B1B"), dict(ok="#10343A", check="#10343A", down="#FFFFFF")
     frows = "".join(
         f"<div class='row'><b>{T['bus']} {n}</b><span class='chip' style='background:{bgc[c_]};color:{fgc[c_]}'>"
@@ -625,6 +657,8 @@ with TB["fleet"]:
     fbus = fa.selectbox(T["bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}", key="fl_bus")
     fnew = fb2.selectbox(T["fl_set"], OKS, format_func=lambda c: T["fs"][OKS.index(c)], key="fl_new")
     st.button(T["fl_btn"], key="fl_go", on_click=lambda: fleet_set(fbus, fnew, "ops"))
+    if s.role == "mgr":
+        bx["sla_min"] = int(st.number_input(T["sla_lbl"], 5, 240, int(bx["sla_min"]), 5, key="sla_in"))
     ops_feed()
 
 # ---------- DRIVER / SUPERVISOR ----------

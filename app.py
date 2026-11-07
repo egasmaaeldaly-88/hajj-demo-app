@@ -15,6 +15,8 @@ st.set_page_config(page_title="Daly Track | Smart Housing & Logistics", page_ico
 s = st.session_state
 s.setdefault("lang", "ar")
 s.setdefault("dark", False)
+s.setdefault("offline", False)
+s.setdefault("queue", [])
 
 # ---------- THEME: edit colors here only ----------
 THEME = {
@@ -30,7 +32,15 @@ C = THEME["dark" if s.dark else "light"]
 L = {
     "ar": dict(
         brand="Daly Track", by="بتقنية",
-        tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🛠 الأسطول والصيانة",
+        net="الاتصال (محاكاة)", off_msg="🔴 وضع بدون إنترنت (محاكاة): العمليات بتتحفظ محليًا في طابور ومش بتوصل للسيرفر لحد المزامنة.",
+        q_lbl="عمليات في انتظار المزامنة", sync="🔄 مزامنة الآن", syncing="جاري رفع العمليات للسيرفر...",
+        synced="تمت مزامنة {n} عملية بنجاح", queued="تم الحفظ محليًا: {n} عملية في الطابور", done_t="تم تسجيل {n} عملية",
+        inc="سجل البلاغات والتنبيهات", ik=("بلاغ طوارئ SOS", "تحديث حالة"), no_inc="لا توجد بلاغات",
+        fin=("الحاسبة المالية (قيم افتراضية للتوضيح)", "سعر لتر الوقود (ر.س)", "استهلاك الحافلة (لتر/100 كم)", "رحلات الحافلة في الموسم",
+             "مسافة الرحلة (كم)", "تكلفة تشغيل الحافلة في الموسم (ر.س)", "سعر العقد للمعتمر (ر.س)", "تكاليف ثابتة (ر.س)",
+             "الإيراد", "التكلفة", "صافي الربح", "هامش الربح", "الوقود", "التشغيل", "ثابتة", "الإيراد مقابل التكلفة",
+             "الأرقام افتراضية وتتغير بالمدخلات، وليست بيانات حقيقية."),
+        tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🚨 غرفة العمليات",
                 driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="💬 واتساب"),
         rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
                               mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
@@ -58,7 +68,15 @@ L = {
         gm=dict(M="ذكر", F="أنثى")),
     "en": dict(
         brand="Daly Track", by="Powered by",
-        tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🛠 Fleet & maintenance",
+        net="Connection (simulated)", off_msg="🔴 Offline mode (simulated): operations are saved locally in a queue and do not reach the server until sync.",
+        q_lbl="Operations waiting to sync", sync="🔄 Sync now", syncing="Uploading operations to the server...",
+        synced="{n} operations synced successfully", queued="Saved locally: {n} operation(s) queued", done_t="{n} operation(s) recorded",
+        inc="Incident and alert log", ik=("SOS emergency", "Status update"), no_inc="No incidents",
+        fin=("Financial calculator (illustrative defaults)", "Fuel price per liter (SAR)", "Bus consumption (L/100 km)", "Trips per bus per season",
+             "Trip distance (km)", "Bus operating cost per season (SAR)", "Contract price per pilgrim (SAR)", "Fixed costs (SAR)",
+             "Revenue", "Cost", "Net profit", "Profit margin", "Fuel", "Operations", "Fixed", "Revenue vs cost",
+             "Figures are illustrative and change with the inputs; they are not real data."),
+        tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🚨 Operations room",
                 driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="💬 WhatsApp"),
         rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
                               mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
@@ -250,7 +268,9 @@ def _shared():
 
 
 def box(k):
-    return _shared().setdefault(k, dict(checked=set(), log=[], msgs=None, fleet={}))
+    b = _shared().setdefault(k, dict(checked=set(), log=[], msgs=None, fleet={}))
+    b.setdefault("inc", [])
+    return b
 
 
 def fstat(b, n):
@@ -274,11 +294,12 @@ if "pid" in qp:  # opened by scanning a pilgrim QR code
     st.stop()
 
 # ---------- TOP BAR ----------
-c1, c2, c3, c4 = st.columns([8, 1, 1, 1])
+c1, c2, c3, c4, c5 = st.columns([7, 1, 1, 1, 1])
 c1.markdown(f"<h1 class='ttl'>🕋 {T['brand']}</h1><br><small style='color:var(--mute)'>{T['title']} · {T['sub']}</small>", unsafe_allow_html=True)
 c2.button("☀️" if s.dark else "🌙", key="tg_dark", on_click=lambda: s.update(dark=not s.dark))
 c3.button("EN" if AR else "ع", key="tg_lang", on_click=lambda: s.update(lang="en" if AR else "ar"))
 c4.button("🔁", key="tg_role", on_click=lambda: s.update(role=None), help=T["sw"])
+c5.button("🔴" if s.offline else "🟢", key="tg_net", on_click=lambda: s.update(offline=not s.offline), help=T["net"])
 if not s.get("role"):
     st.markdown(f"### {T['rl'][0]}")
     for col, k_ in zip(st.columns(3), ("hotel", "bus", "mgr")):
@@ -295,15 +316,61 @@ if bad:
 d = alloc(raw)
 bx = box(hi if up is None else ("up", up.name))
 if s.role == "mgr":
-    st.button(T["rst"], key="rst", on_click=lambda: bx.update(checked=set(), log=[], msgs=None, fleet={}))
+    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[]), s.update(queue=[])))
+
+
+NMAP, BMAP = d.set_index("pid")[NM], d.set_index("pid").bus
+
+
+def commit(item):
+    if item[0] == "scan":
+        p = item[1]
+        if p not in bx["checked"]:
+            bx["checked"].add(p)
+            bx["log"].insert(0, f"{p} · {NMAP[p]} · {T['bus']} {BMAP[p]}")
+    else:
+        _, b_, st_, kind, ts = item
+        bx["fleet"][b_] = st_
+        bx["inc"].insert(0, (ts, b_, kind, st_))
 
 
 def mark(pids):
-    nmap, bmap = d.set_index("pid")[NM], d.set_index("pid").bus
-    for p in pids:
-        if p not in bx["checked"]:
-            bx["checked"].add(p)
-            bx["log"].insert(0, f"{p} · {nmap[p]} · {T['bus']} {bmap[p]}")
+    queued = {q[1] for q in s.queue if q[0] == "scan"}
+    new = [p for p in pids if p not in bx["checked"] and p not in queued]
+    if s.offline:
+        s.queue += [("scan", p) for p in new]
+        s.flash = T["queued"].format(n=len(new))
+    else:
+        for p in new:
+            commit(("scan", p))
+        s.flash = T["done_t"].format(n=len(new))
+
+
+def fleet_set(bus, status, kind):
+    item = ("fleet", bus, status, kind, time.strftime("%H:%M:%S"))
+    if s.offline:
+        s.queue.append(item)
+        s.flash = T["queued"].format(n=1)
+    else:
+        commit(item)
+        s.flash = T["done_t"].format(n=1)
+
+
+if s.get("flash"):
+    st.toast(s.pop("flash"))
+if s.offline:
+    st.warning(T["off_msg"])
+if s.queue:
+    qa, qb = st.columns([3, 1])
+    qa.markdown(card(T["q_lbl"], len(s.queue)), unsafe_allow_html=True)
+    if qb.button(T["sync"], key="sync", disabled=s.offline):
+        with st.spinner(T["syncing"]):
+            time.sleep(1.4)
+        n_sync = len(s.queue)
+        for it in s.queue:
+            commit(it)
+        s.queue = []
+        st.success(T["synced"].format(n=n_sync))
 
 
 nb = int(d.bus.max())
@@ -389,6 +456,37 @@ with TB["dash"]:
     st.markdown(f"### {T['heat']}")
     st.markdown(f"<div class='card'>{bld}<div style='margin-top:12px'>{lg}</div></div>", unsafe_allow_html=True)
 
+    if s.role == "mgr":
+        F = T["fin"]
+        st.markdown(f"### {F[0]}")
+        q1, q2, q3, q4 = st.columns(4)
+        fp = q1.slider(F[1], 1.0, 4.0, 2.0, 0.1, key="f_fp")
+        fc = q2.slider(F[2], 20, 60, 35, key="f_fc")
+        ft = q3.slider(F[3], 10, 200, 60, key="f_ft")
+        fk = q4.slider(F[4], 5, 100, 25, key="f_fk")
+        r1, r2, r3 = st.columns(3)
+        fo = r1.slider(F[5], 0, 30000, 8000, 500, key="f_fo")
+        fcn = r2.slider(F[6], 500, 5000, 1500, 100, key="f_fcn")
+        fx = r3.slider(F[7], 0, 100000, 20000, 1000, key="f_fx")
+        fuel, ops_c = nb * ft * fk * fc / 100 * fp, nb * fo
+        cost = fuel + ops_c + fx
+        rev = placed * fcn
+        prof = rev - cost
+        vals_ = (f"{rev:,.0f}", f"{cost:,.0f}", f"{prof:,.0f}", f"{prof / rev:.0%}" if rev else "-")
+        for col, lab, v, unit in zip(st.columns(4), F[8:12], vals_, ("SAR", "SAR", "SAR", "")):
+            col.markdown(card(lab, v, unit), unsafe_allow_html=True)
+        z1, z2 = st.columns(2)
+        with z1:
+            donut(F[12:15], [fuel, ops_c, fx], F[9], f"{cost:,.0f}")
+        with z2:
+            fb_ = px.bar(x=list(F[8:11]), y=[rev, cost, prof], color_discrete_sequence=[GOLD], title=F[15],
+                         text=[f"{v:,.0f}" for v in (rev, cost, prof)])
+            fb_.update_traces(textposition="outside", marker_cornerradius=6)
+            fb_.update_xaxes(title=None)
+            fb_.update_yaxes(title=None)
+            show(fb_)
+        st.caption(F[16])
+
 # ---------- 2. HOUSING ----------
 with TB["house"]:
     a, b = st.columns([2, 1])
@@ -437,10 +535,8 @@ with TB["qr"]:
         qrcode.make(f"{APP_URL}?pid={sel}&h={hi}").save(buf, "PNG")
         st.image(buf.getvalue(), width=200)
         st.caption(T["qr_note"])
-        if st.button(T["scan"], key="scan"):
-            mark([sel])
-        if st.button(T["scan10"], key="scan10"):
-            mark([p for p in d[d.bus > 0].pid if p not in bx["checked"]][:10])
+        st.button(T["scan"], key="scan", on_click=lambda: mark([sel]))
+        st.button(T["scan10"], key="scan10", on_click=lambda: mark([p for p in d[d.bus > 0].pid if p not in bx["checked"]][:10]))
     with b:
         rate = len(bx["checked"]) / tot
         st.markdown(card(T["att"], f"{len(bx["checked"])}/{tot}", f"{rate:.0%}"), unsafe_allow_html=True)
@@ -470,9 +566,12 @@ with TB["wa"]:
                         unsafe_allow_html=True)
 
 
-# ---------- FLEET ----------
+# ---------- OPERATIONS ROOM ----------
 OKS = ("ok", "check", "down")
-with TB["fleet"]:
+
+
+@st.fragment(run_every=5)
+def ops_feed():
     fs_ = [fstat(bx, n) for n in range(1, nb + 1)]
     for col, code, lab in zip(st.columns(3), OKS, T["fs"]):
         col.markdown(card(lab, fs_.count(code)), unsafe_allow_html=True)
@@ -484,22 +583,30 @@ with TB["fleet"]:
         f"{T['fs'][OKS.index(c_)]}</span><span>{int(by_bus.get(n, 0))}</span><span></span></div>"
         for n, c_ in zip(range(1, nb + 1), fs_))
     st.markdown(f"<div class='card' style='margin-top:12px'>{frows}</div>", unsafe_allow_html=True)
+    st.markdown(f"### {T['inc']}")
+    irows = ""
+    for ts, n, kind, stt in bx["inc"][:8]:
+        sty = "background:rgba(180,42,39,.14);color:#B42A27;font-weight:700;" if kind == "sos" else ""
+        irows += (f"<div class='row' style='grid-template-columns:90px 1fr 120px;border-radius:8px;padding:4px 8px;{sty}'>"
+                  f"<span>{ts}</span><span>{T['bus']} {n} · {T['ik'][0 if kind == 'sos' else 1]}</span>"
+                  f"<span>{T['fs'][OKS.index(stt)]}</span></div>")
+    st.markdown(f"<div class='card'>{irows or '<small>' + T['no_inc'] + '</small>'}</div>", unsafe_allow_html=True)
+
+
+with TB["fleet"]:
     fa, fb2 = st.columns(2)
     fbus = fa.selectbox(T["bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}", key="fl_bus")
     fnew = fb2.selectbox(T["fl_set"], OKS, format_func=lambda c: T["fs"][OKS.index(c)], key="fl_new")
-    st.button(T["fl_btn"], key="fl_go", on_click=lambda: bx["fleet"].__setitem__(fbus, fnew))
+    st.button(T["fl_btn"], key="fl_go", on_click=lambda: fleet_set(fbus, fnew, "ops"))
+    ops_feed()
 
 # ---------- DRIVER / SUPERVISOR ----------
 with TB["driver"]:
     dbus = st.selectbox(T["bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}", key="drv_bus")
     mem_ = d[d.bus == dbus]
     da, db_ = st.columns(2)
-    if da.button(T["dr_done"], key="dr_done"):
-        mark(list(mem_.pid))
-        st.success(T["dr_ok"].format(n=len(mem_)))
-    if db_.button(T["dr_sos"], key="dr_sos"):
-        bx["fleet"][dbus] = "down"
-        st.error(T["dr_sosm"])
+    da.button(T["dr_done"], key="dr_done", on_click=lambda: mark(list(mem_.pid)))
+    db_.button(T["dr_sos"], key="dr_sos", on_click=lambda: fleet_set(dbus, "down", "sos"))
     dep = bx["msgs"][2] if bx["msgs"] and bx["msgs"][0] == dbus else "14:00"
     nbd = int(d[d.pid.isin(bx["checked"]) & (d.bus == dbus)].shape[0])
     st.markdown(card(f"{T['bus']} {dbus}", f"{nbd}/{len(mem_)}", f"{T['dr_route']} · {T['dr_dep']} {dep}"), unsafe_allow_html=True)

@@ -43,7 +43,36 @@ L = {
              "الإيراد", "التكلفة", "صافي الربح", "هامش الربح", "الوقود", "التشغيل", "ثابتة", "الإيراد مقابل التكلفة",
              "الأرقام افتراضية وتتغير بالمدخلات، وليست بيانات حقيقية."),
         tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🚨 غرفة العمليات", energy="🔋 الطاقة والأسطول",
-                driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="📣 الإشعارات"),
+                driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="📣 الإشعارات", hk="🛏️ الإشراف الداخلي", eco="🌿 وضع توفير الطاقة"),
+        hk=dict(
+            title="الإشراف الداخلي: حالة الغرف",
+            note="حالات الغرف وعمليات النقل بيانات تجريبية (محاكاة) وغير مربوطة بأي نظام فندقي حقيقي.",
+            st=("🟢 جاهزة ومعقمة", "🟡 تنظيف ومغادرة", "🔴 عطل (صيانة أو تكييف)"), refresh="تحديث", room="الغرفة", new="الحالة الجديدة", apply="تطبيق الحالة",
+            occ="الساكنين", sp="حالة خاصة", nr="غرف غير جاهزة", lg2=("تنظيف", "عطل"),
+            w_clean="🟡 غرف قيد التنظيف وفيها ساكنين (لم يتم نقلهم تلقائيًا):",
+            man_t="تسكين يدوي مطلوب", man_warn="⚠️ مفيش غرفة 🟢 مناسبة حسب القواعد للوحدات دي. اختار غرفة يدويًا.",
+            why=dict(low="لا توجد غرفة جاهزة في الدورين 1-2", none="لا توجد غرفة جاهزة بسعة أو شروط مناسبة"),
+            pick="اختر الغرفة", seat="تسكين", viol="مخالفة لقاعدة الدورين 1-2", no_cand="مفيش غرفة جاهزة تناسب الوحدة دي حتى بعد تخفيف قاعدة الدور.",
+            log_t="سجل النقل", no_log="لا توجد نقلات", none="بانتظار تسكين", fam="عيلة",
+            lk=dict(auto="نقل تلقائي", manual="تسكين يدوي", viol="يدوي ⚠️ مخالفة الدور", pending="بانتظار تسكين يدوي", rej="مرفوض (الغرفة لم تعد مناسبة)")),
+        eco=dict(
+            title="وضع توفير الطاقة (Eco-Mode): معاينة فقط",
+            sim_note="⚠️ محاكاة فقط: مفيش ربط فعلي بأي نظام تحكم في التكييف أو الإضاءة، ولا بيتغيّر التسكين الفعلي. كل القيم الافتراضية للتوضيح.",
+            s_pct="الإشغال: سيناريو محاكاة % (للتوضيح)", s_thr="حد الإشغال المنخفض % (للتوضيح)",
+            actual="الإشغال الفعلي الحالي", used="الإشغال المستخدم في المحاكاة", sug="الأدوار المقترح قفلها",
+            auto="عدد الأدوار المقفولة: تلقائي (المقترح)", s_k="عدد الأدوار المقفولة (يدوي)",
+            s_cons="استهلاك الدور (كيلوواط ساعة/يوم) · للتوضيح", s_red="نسبة التخفيض عند الإغلاق % · للتوضيح",
+            s_days="عدد الأيام · للتوضيح", s_price="سعر الكيلوواط ساعة (ر.س) · للتوضيح",
+            ok_sug="المقترح: قفل {k} أدوار (الأدوار: {fl}).", k0="مفيش دور ينفع يتفضّى بدون كسر قواعد التسكين.",
+            not_low="الإشغال مش منخفض (أعلى من الحد)، فمفيش اقتراح.",
+            fl_t="الأدوار قبل وبعد (محاكاة)", before="قبل", after="بعد", st=("مفتوح", "مقفول (اقتراح)"), units="وحدة هتتنقل",
+            moved="{u} وحدة ({p} معتمر) هتتنقل لغرف تانية.",
+            unplaced="🔴 {u} وحدة ({p} معتمر) مش لاقية مكان يحترم القواعد في الاختيار ده.",
+            e_title="تقدير الطاقة (افتراضات قابلة للتعديل، للتوضيح)", e_kwh="تقدير الطاقة المخفّضة (كيلوواط ساعة)", e_cost="تقدير التكلفة المقابلة (ر.س)",
+            e_formula="المعادلة: الأدوار المقفولة × استهلاك الدور × نسبة التخفيض × الأيام (وبالسعر للتكلفة). الأرقام تقدير مبني على افتراضات، مش بيانات حقيقية.",
+            approx="الاقتراح تقريبي (خوارزمية بسيطة وممكن تفوّت ترتيب أفضل).",
+            review="قفل الأدوار فعليًا يحتاج مراجعة السلامة وراحة النزلاء ومواعيد وصول الأفواج.",
+            rules="القواعد المطبّقة: العيلة مع بعض، كبار السن والحالات الخاصة في الدورين 1-2 (ومابيتقفلوش)، فصل الرجال عن النساء، السعة، واستبعاد الغرف 🟡 و🔴. القفل من فوق لتحت."),
         rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
                               mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
         fs=("جاهزة", "تحت الفحص", "عطلانة"), fl_set="حالة الحافلة", fl_btn="تحديث الحالة", fl_alert="🚨 فيه حافلة عطلانة: تم إرسال فريق صيانة متنقل (محاكاة)",
@@ -96,7 +125,36 @@ L = {
              "Revenue", "Cost", "Net profit", "Profit margin", "Fuel", "Operations", "Fixed", "Revenue vs cost",
              "Figures are illustrative and change with the inputs; they are not real data."),
         tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🚨 Operations room", energy="🔋 Energy & fleet",
-                driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="📣 Announcements"),
+                driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="📣 Announcements", hk="🛏️ Internal supervision", eco="🌿 Eco-Mode"),
+        hk=dict(
+            title="Internal supervision: room status",
+            note="Room statuses and moves are demo data (simulation) and not connected to any real hotel system.",
+            st=("🟢 Ready & sanitized", "🟡 Cleaning / checkout", "🔴 Fault (maintenance or A/C)"), refresh="Refresh", room="Room", new="New status", apply="Apply status",
+            occ="Occupants", sp="Special case", nr="Rooms not ready", lg2=("Cleaning", "Fault"),
+            w_clean="🟡 Rooms under cleaning that still have guests (not moved automatically):",
+            man_t="Manual seating required", man_warn="⚠️ No suitable 🟢 room under the rules for these units. Pick a room manually.",
+            why=dict(low="No ready room on floors 1-2", none="No ready room with suitable capacity or rules"),
+            pick="Choose room", seat="Seat", viol="breaks the floors 1-2 rule", no_cand="No ready room fits this unit, even with the floor rule relaxed.",
+            log_t="Move log", no_log="No moves", none="Awaiting room", fam="family",
+            lk=dict(auto="Automatic move", manual="Manual seating", viol="Manual ⚠️ floor rule broken", pending="Awaiting manual seating", rej="Rejected (room no longer suitable)")),
+        eco=dict(
+            title="Eco-Mode: preview only",
+            sim_note="⚠️ Simulation only: no real connection to any A/C or lighting control system, and the actual housing is not changed. All default values are illustrative.",
+            s_pct="Occupancy: simulation scenario % (illustrative)", s_thr="Low-occupancy threshold % (illustrative)",
+            actual="Current actual occupancy", used="Occupancy used in the simulation", sug="Floors suggested to close",
+            auto="Floors to close: automatic (suggested)", s_k="Floors to close (manual)",
+            s_cons="Consumption per floor (kWh/day) · illustrative", s_red="Reduction when closed % · illustrative",
+            s_days="Number of days · illustrative", s_price="Price per kWh (SAR) · illustrative",
+            ok_sug="Suggested: close {k} floor(s) (floors: {fl}).", k0="No floor can be emptied without breaking the housing rules.",
+            not_low="Occupancy is not low (above the threshold), so there is no suggestion.",
+            fl_t="Floors before and after (simulation)", before="Before", after="After", st=("Open", "Closed (suggested)"), units="unit(s) to move",
+            moved="{u} unit(s) ({p} pilgrims) would move to other rooms.",
+            unplaced="🔴 {u} unit(s) ({p} pilgrims) have no room that respects the rules in this choice.",
+            e_title="Energy estimate (editable assumptions, illustrative)", e_kwh="Estimated reduced energy (kWh)", e_cost="Estimated matching cost (SAR)",
+            e_formula="Formula: closed floors × consumption per floor × reduction % × days (× price for the cost). Figures are an estimate based on assumptions, not real data.",
+            approx="The suggestion is approximate (a simple algorithm that can miss a better arrangement).",
+            review="Actually closing floors needs a review of safety, guest comfort and group arrival times.",
+            rules="Rules applied: family together, elderly and special cases on floors 1-2 (never closed), men/women separation, capacity, and 🟡/🔴 rooms excluded. Closing goes from the top down."),
         rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
                               mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
         fs=("Ready", "Inspection", "Broken down"), fl_set="Bus status", fl_btn="Update status", fl_alert="🚨 A bus is down: mobile maintenance team dispatched (simulated)",
@@ -184,7 +242,7 @@ CAPS = [2, 3, 4, 4, 4, 3, 2, 4, 4, 4]
 
 
 @st.cache_data
-def demo(seed, n=300):
+def demo(seed, n=280):
     r, rows, f = random.Random(seed), [], 0
 
     def person(g, age, fam, sn):
@@ -340,6 +398,184 @@ def merge_candidates(trips, max_gap_min, max_fill_pct):
     return out
 
 
+# ---------- ROOM STATUS & MOVES: pure functions, no Streamlit calls (to be moved to housing.py after the expo) ----------
+RS = ("ready", "clean", "fault")
+ALL_ROOMS = [f"{f}{i + 1:02d}" for f in range(1, 11) for i in range(10)]
+
+
+def room_floor(rid):
+    return int(rid[:-2])
+
+
+def room_cap(rid):
+    return CAPS[int(rid[-2:]) - 1]
+
+
+def room_status(rooms, rid):
+    return rooms.get(rid, "ready")
+
+
+def merged_housing(d_base, b):
+    """The single place that combines the base allocation with the moves stored in box(). Bus is never touched."""
+    mv = b.get("moves") or {}
+    d = d_base.copy()
+    if not mv:
+        return d
+    m = d.pid.map(mv)
+    hit = m.notna()
+    if hit.any():
+        d.loc[hit, "room"] = m[hit]
+        d.loc[hit, "floor"] = [room_floor(r) if r else 0 for r in m[hit]]
+    return d
+
+
+def _occupancy(d):
+    occ = {}
+    for p, rid, fam, g in zip(d.pid, d.room, d.family, d.gender):
+        if rid:
+            occ.setdefault(rid, []).append((p, fam, g))
+    return occ
+
+
+def _units(d, rid):
+    o = d[d.room == rid]
+    units = [dict(pids=list(g.pid), fam=fam, g=None, n=len(g), sp=bool(g.special.any()))
+             for fam, g in o[o.family != ""].groupby("family")]
+    units += [dict(pids=[r.pid], fam="", g=r.gender, n=1, sp=bool(r.special)) for _, r in o[o.family == ""].iterrows()]
+    units.sort(key=lambda u: (not u["sp"], -u["n"], u["pids"][0]))
+    return units
+
+
+def _fits(unit, members):
+    if not members:
+        return True
+    if unit["fam"]:
+        return all(f == unit["fam"] for _, f, _ in members)
+    return all(f == "" and g == unit["g"] for _, f, g in members)
+
+
+def _candidates(d, rooms, occ, unit, origin, relax_floor=False):
+    """Ready rooms that can take the unit, best first: [(room_id, breaks_floor_rule)]."""
+    if unit["fam"]:
+        rest = d[(d.family == unit["fam"]) & ~d.pid.isin(unit["pids"]) & (d.room != "")]
+        rest_rooms, anchors = set(rest.room), set(int(x) for x in rest.floor)
+    else:
+        rest_rooms, anchors = set(), set()
+    anchors = anchors or {room_floor(origin)}
+    out = []
+    for rid in ALL_ROOMS:
+        if rid == origin or room_status(rooms, rid) != "ready":
+            continue
+        members = occ.get(rid, [])
+        free = room_cap(rid) - len(members)
+        if free < unit["n"] or not _fits(unit, members):
+            continue
+        viol = bool(unit["sp"]) and room_floor(rid) > 2
+        if viol and not relax_floor:
+            continue
+        dist = min(abs(room_floor(rid) - a) for a in anchors)
+        if unit["fam"]:
+            key = (viol, rid not in rest_rooms, dist, free - unit["n"], rid)
+        else:
+            key = (viol, not members, dist, free - 1, rid)
+        out.append((key, rid, viol))
+    out.sort()
+    return [(rid, viol) for _, rid, viol in out]
+
+
+def plan_move(d, rooms, rid):
+    """Moves the occupants of room rid to other ready rooms. Returns (moves {pid: room or ''}, manual units, log rows)."""
+    work, moves, manual, log = d.copy(), {}, [], []
+    occ = _occupancy(work)
+    for u in _units(work, rid):
+        c = _candidates(work, rooms, occ, u, rid)
+        to = c[0][0] if c else ""
+        if not c:
+            why = "low" if u["sp"] and _candidates(work, rooms, occ, u, rid, True) else "none"
+            manual.append(dict(u, frm=rid, why=why))
+        occ[rid] = [x for x in occ.get(rid, []) if x[0] not in u["pids"]]
+        if to:
+            occ.setdefault(to, []).extend((p, u["fam"], u["g"] or work.loc[work.pid == p, "gender"].iloc[0]) for p in u["pids"])
+        mask = work.pid.isin(u["pids"])
+        work.loc[mask, "room"], work.loc[mask, "floor"] = to, (room_floor(to) if to else 0)
+        for p in u["pids"]:
+            moves[p] = to
+        log.append(dict(frm=rid, to=to, pids=u["pids"], fam=u["fam"]))
+    return moves, manual, log
+
+
+# ---------- ECO-MODE (dry run only): pure functions, never write to box() ----------
+TOTAL_BEDS = sum(CAPS) * 10
+MAX_CLOSE = 8  # floors 1-2 are never closed (special cases live there)
+
+
+def simulate_departures(d, target_pct, seed=11):
+    """Dry run: removes whole families / single guests (stable random order) until occupied beds <= target_pct of all beds."""
+    placed = d[d.room != ""]
+    target = int(round(target_pct / 100 * TOTAL_BEDS))
+    if len(placed) <= target:
+        return d.copy()
+    units = [list(placed[placed.family == f].pid) for f in sorted(set(placed.family) - {""})]
+    units += [[p] for p in sorted(placed[placed.family == ""].pid)]
+    random.Random(seed).shuffle(units)
+    left, gone = len(placed), set()
+    for u in units:
+        if left <= target:
+            break
+        gone.update(u)
+        left -= len(u)
+    return d[~d.pid.isin(gone)].copy()
+
+
+def top_floors(k):
+    return list(range(10, 10 - k, -1))
+
+
+def plan_consolidation(d, rooms, close_floors):
+    """Dry run: tries to empty close_floors by moving their guests to other ready rooms under the housing rules. Never mutates d."""
+    closed = set(close_floors)
+    r2 = dict(rooms)
+    for f in closed:
+        for i in range(10):
+            r2[f"{f}{i + 1:02d}"] = "fault"  # virtual: closed rooms cannot receive guests
+    work = d.copy()
+    occ, gd = _occupancy(work), dict(zip(work.pid, work.gender))
+    moved_u = moved_p = un_u = un_p = 0
+    from_f = {f: 0 for f in range(1, 11)}
+    for f in sorted(closed, reverse=True):
+        for i in range(10):
+            rid = f"{f}{i + 1:02d}"
+            for u in _units(work, rid):
+                c = _candidates(work, r2, occ, u, rid)
+                to = c[0][0] if c else ""
+                occ[rid] = [x for x in occ.get(rid, []) if x[0] not in u["pids"]]
+                if to:
+                    occ.setdefault(to, []).extend((p, u["fam"], gd[p]) for p in u["pids"])
+                    moved_u, moved_p, from_f[f] = moved_u + 1, moved_p + u["n"], from_f[f] + 1
+                else:
+                    un_u, un_p = un_u + 1, un_p + u["n"]
+                mask = work.pid.isin(u["pids"])
+                work.loc[mask, "room"], work.loc[mask, "floor"] = to, (room_floor(to) if to else 0)
+    floors = [dict(floor=f, before=int((d.floor == f).sum()), after=int((work.floor == f).sum()), closed=f in closed, moves=from_f[f])
+              for f in range(10, 0, -1)]
+    return dict(ok=un_u == 0, closed=len(closed), moved_units=moved_u, moved_pilgrims=moved_p,
+                unplaced_units=un_u, unplaced_pilgrims=un_p, floors=floors, after=work)
+
+
+def suggest_close(d, rooms):
+    best = 0
+    for k in range(1, MAX_CLOSE + 1):
+        if not plan_consolidation(d, rooms, top_floors(k))["ok"]:
+            break
+        best = k
+    return best
+
+
+def eco_estimate(k_closed, kwh_floor_day, reduction_pct, days, price):
+    kwh = k_closed * kwh_floor_day * reduction_pct / 100 * days
+    return kwh, kwh * price
+
+
 def show(fig, h=290, donut=None):
     fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", dragmode=False, height=h,
                       font=dict(color=C["ink"], family="Tajawal"), margin=dict(l=0, r=0, t=40, b=0), title_font_size=16,
@@ -380,6 +616,10 @@ def box(k):
     b.setdefault("down_at", {})
     b.setdefault("sla_min", 60)
     b.setdefault("merged", {})
+    b.setdefault("rooms", {})
+    b.setdefault("moves", {})
+    b.setdefault("move_log", [])
+    b.setdefault("manual", [])
     return b
 
 
@@ -390,7 +630,8 @@ def fstat(b, n):
 qp = st.query_params
 if "pid" in qp:  # opened by scanning a pilgrim QR code
     hq = int(qp["h"]) if str(qp.get("h", "0")).isdigit() and int(qp["h"]) < 3 else 0
-    dq, bq = alloc(demo(hq + 7)), box(hq)
+    bq = box(hq)
+    dq = merged_housing(alloc(demo(hq + 7)), bq)
     rw = dq[dq.pid == qp["pid"]]
     if rw.empty:
         st.error("QR ?")
@@ -402,7 +643,7 @@ if "pid" in qp:  # opened by scanning a pilgrim QR code
         st.markdown(f"<h1 class='ttl'>🕋 {T['brand']}</h1>", unsafe_allow_html=True)
         dep_q = bq["msgs"][2] if bq["msgs"] and bq["msgs"][0] == r0.bus else "14:00"
         st.markdown(card(T["qr_ok"], f"✅ {r0[NM]}", f"{r0.pid}"), unsafe_allow_html=True)
-        det = [(T["hotel"], T["hotels"][hq]), (T["rm"], r0.room or "-"), (T["fl"], r0.floor or "-"),
+        det = [(T["hotel"], T["hotels"][hq]), (T["rm"], r0.room or T["hk"]["none"]), (T["fl"], r0.floor or "-"),
                (T["bus"], r0.bus or "-"), (T["dr_dep"], dep_q)]
         st.markdown("<div class='card' style='margin-top:12px'>" + "".join(
             f"<div class='row' style='grid-template-columns:110px 1fr'><b>{a_}</b><span>{b_}</span></div>" for a_, b_ in det)
@@ -437,10 +678,11 @@ up = st.file_uploader(T["up"], type=["csv", "xlsx"])
 raw, bad = load(up, hi + 7)
 if bad:
     st.warning(T["bad"])
-d = alloc(raw)
+d_base = alloc(raw)
 bx = box(hi if up is None else ("up", up.name))
+d = merged_housing(d_base, bx)
 if s.role == "mgr":
-    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[], down_at={}, sla_min=60, merged={}), s.update(queue=[])))
+    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[], down_at={}, sla_min=60, rooms={}, moves={}, move_log=[], manual=[], merged={}), s.update(queue=[])))
 
 
 NMAP, BMAP = d.set_index("pid")[NM], d.set_index("pid").bus
@@ -454,7 +696,7 @@ def commit(item):
             bx["log"].insert(0, f"{p} · {NMAP[p]} · {T['bus']} {BMAP[p]}")
     elif item[0] == "merge":
         bx["merged"][item[2]] = item[1]
-    else:
+    elif item[0] == "fleet":
         _, b_, st_, kind, ts = item
         bx["fleet"][b_] = st_
         if st_ == "down":
@@ -462,6 +704,34 @@ def commit(item):
         else:
             bx["down_at"].pop(b_, None)
         bx["inc"].insert(0, (ts, b_, kind, st_))
+    elif item[0] == "room":
+        _, rid, new, ts = item
+        if new == bx["rooms"].get(rid, "ready"):
+            return
+        if new == "ready":
+            bx["rooms"].pop(rid, None)
+        else:
+            bx["rooms"][rid] = new
+        if new == "fault":
+            mv, man, lg = plan_move(merged_housing(d_base, bx), bx["rooms"], rid)
+            bx["moves"].update(mv)
+            bx["manual"].extend(man)
+            for row in reversed(lg):
+                bx["move_log"].insert(0, (ts, "auto" if row["to"] else "pending", row["frm"], row["to"], tuple(row["pids"]), row["fam"]))
+    elif item[0] == "seat":
+        _, pids, rid, ts = item
+        u = next((x for x in bx["manual"] if tuple(x["pids"]) == tuple(pids)), None)
+        if u is None:
+            return
+        cur = merged_housing(d_base, bx)
+        ok = dict(_candidates(cur, bx["rooms"], _occupancy(cur), u, u["frm"], True))
+        if rid not in ok:
+            bx["move_log"].insert(0, (ts, "rej", u["frm"], rid, tuple(pids), u["fam"]))
+            return
+        for p in pids:
+            bx["moves"][p] = rid
+        bx["manual"].remove(u)
+        bx["move_log"].insert(0, (ts, "viol" if ok[rid] else "manual", u["frm"], rid, tuple(pids), u["fam"]))
 
 
 def mark(pids):
@@ -519,12 +789,12 @@ tot = len(d)
 placed = int((d.room != "").sum())
 boarded = d[d.pid.isin(bx["checked"])].groupby("bus").size()
 by_bus = d[d.bus > 0].groupby("bus").size()
-ROLE = dict(hotel=["dash", "house"], bus=["fleet", "energy", "buses", "driver", "qr", "wa"],
-            mgr=["dash", "house", "buses", "fleet", "energy", "driver", "qr", "wa"])
+ROLE = dict(hotel=["dash", "house", "hk", "eco"], bus=["fleet", "energy", "buses", "driver", "qr", "wa"],
+            mgr=["dash", "house", "hk", "eco", "buses", "fleet", "energy", "driver", "qr", "wa"])
 keys = ROLE[s.role]
 tb = st.tabs([T["tn"][k] for k in keys])
 HID = st.container(key="hid_pages")
-TB = {k: (tb[keys.index(k)] if k in keys else HID) for k in ("dash", "house", "buses", "fleet", "energy", "driver", "qr", "wa")}
+TB = {k: (tb[keys.index(k)] if k in keys else HID) for k in ("dash", "house", "hk", "eco", "buses", "fleet", "energy", "driver", "qr", "wa")}
 
 # ---------- 1. DASHBOARD ----------
 with TB["dash"]:
@@ -588,14 +858,22 @@ with TB["dash"]:
             bg, bd = "#1B1B1B", f"2px solid {GOLD}"
         else:
             bg, bd = tone[0 if n_ == 0 else 2 if n_ >= cp else 1], "0"
-        return f"<div class='rm' title='{rid}: {n_}/{cp}' style='background:{bg};border:{bd}'></div>"
+        rs_ = room_status(bx["rooms"], rid)
+        ol = "outline:2px solid #E0B400;outline-offset:1px;" if rs_ == "clean" else ""
+        if rs_ == "fault":
+            bg = "#B42A27"
+        mk = T["hk"]["st"][RS.index(rs_)][0] if rs_ != "ready" else ""
+        return f"<div class='rm' title='{rid}: {n_}/{cp} {mk}' style='background:{bg};border:{bd};{ol}'></div>"
 
     bld = "".join(f"<div class='fl'><span>{f}</span>" + "".join(cell(f, i) for i in range(10)) + "</div>"
                   for f in range(10, 0, -1))
     lg = "".join(f"<span class='lg'><i style='background:{c_}'></i>{t_}</span>"
-                 for c_, t_ in zip(tone + ["#1B1B1B"], T["lg"]))
+                 for c_, t_ in zip(tone + ["#1B1B1B", "#E0B400", "#B42A27"], tuple(T["lg"]) + tuple(T["hk"]["lg2"])))
     st.markdown(f"### {T['heat']}")
     st.markdown(f"<div class='card'>{bld}<div style='margin-top:12px'>{lg}</div></div>", unsafe_allow_html=True)
+    n_cl_, n_ft_ = list(bx["rooms"].values()).count("clean"), list(bx["rooms"].values()).count("fault")
+    if n_cl_ or n_ft_:
+        st.caption(f"{T['hk']['nr']}: 🟡 {n_cl_} · 🔴 {n_ft_}")
 
     if s.role == "mgr":
         F = T["fin"]
@@ -684,7 +962,7 @@ with TB["qr"]:
                  f"<div style='font-size:22px;font-weight:700;margin:8px 0'>{html.escape(str(rw_[NM]))}</div>"
                  f"<img src='data:image/png;base64,{b64}' width='150'/>"
                  f"<div style='font-size:13px;margin-top:8px'>{sel} · {T['hotels'][hi]}<br>"
-                 f"{T['rm']} {rw_.room or '-'} · {T['bus']} {rw_.bus or '-'}</div></div>")
+                 f"{T['rm']} {rw_.room or T['hk']['none']} · {T['bus']} {rw_.bus or '-'}</div></div>")
         st.markdown(badge, unsafe_allow_html=True)
         st.download_button(T["pg_badge"], ("<meta charset='utf-8'>" + badge).encode("utf-8"), f"{sel}_badge.html", "text/html", key="dl_badge")
         st.button(T["scan"], key="scan", on_click=lambda: mark([sel]))
@@ -855,6 +1133,143 @@ with TB["energy"]:
         st.markdown(card(G[24], f"{rg:,.0f}", f"{td} km"), unsafe_allow_html=True)
         (st.success if okr else st.error)(G[25] if okr else G[26])
         st.caption(G[28])
+
+# ---------- INTERNAL SUPERVISION (ROOM STATUS) ----------
+RCOL = dict(ready=("#E7CF8A", "#10343A"), clean=("#E0B400", "#10343A"), fault=("#B42A27", "#FFFFFF"))
+
+
+def room_set(rid, new):
+    item = ("room", rid, new, time.strftime("%H:%M:%S"))
+    if s.offline:
+        s.queue.append(item)
+        s.flash = T["queued"].format(n=1)
+    else:
+        commit(item)
+        s.flash = T["done_t"].format(n=1)
+
+
+def seat_unit(u, rid):
+    item = ("seat", tuple(u["pids"]), rid, time.strftime("%H:%M:%S"))
+    if s.offline:
+        s.queue.append(item)
+        s.flash = T["queued"].format(n=1)
+    else:
+        commit(item)
+        s.flash = T["done_t"].format(n=1)
+
+
+def names_of(pids):
+    return ", ".join(str(NMAP.get(p, p)) for p in pids[:3]) + ("…" if len(pids) > 3 else "")
+
+
+with TB["hk"]:
+    if "hk" in keys:
+        HK = T["hk"]
+        st.markdown(f"### {HK['title']}")
+        st.caption(HK["note"])
+        st.button(HK["refresh"], key="hk_refresh")
+        n_c_, n_f_ = list(bx["rooms"].values()).count("clean"), list(bx["rooms"].values()).count("fault")
+        for col, lab, v in zip(st.columns(3), HK["st"], (len(ALL_ROOMS) - n_c_ - n_f_, n_c_, n_f_)):
+            col.markdown(card(lab, v), unsafe_allow_html=True)
+        h1, h2, h3 = st.columns(3)
+        hf = h1.selectbox(T["fl"], range(1, 11), key="hk_fl")
+        hr = h2.selectbox(HK["room"], [f"{hf}{i + 1:02d}" for i in range(10)], key=f"hk_rm_{hf}",
+                          format_func=lambda r: f"{r} · {HK['st'][RS.index(room_status(bx['rooms'], r))]}")
+        hn = h3.selectbox(HK["new"], RS, format_func=lambda c: HK["st"][RS.index(c)], key="hk_new")
+        st.button(HK["apply"], key="hk_apply", on_click=lambda: room_set(hr, hn))
+        occ_ = d[d.room != ""].groupby("room").size()
+        spr_ = set(d[(d.room != "") & d.special].room)
+        rws = ""
+        for i in range(10):
+            rid_ = f"{hf}{i + 1:02d}"
+            rs_ = room_status(bx["rooms"], rid_)
+            rws += (f"<div class='row'><b>{rid_}</b><span class='chip' style='background:{RCOL[rs_][0]};color:{RCOL[rs_][1]}'>{HK['st'][RS.index(rs_)]}</span>"
+                    f"<span>{HK['occ']} {int(occ_.get(rid_, 0))}/{CAPS[i]}</span><span>{HK['sp'] if rid_ in spr_ else ''}</span></div>")
+        st.markdown(f"<div class='card' style='margin-top:12px'>{rws}</div>", unsafe_allow_html=True)
+        cl_occ_ = sorted(r for r, v in bx["rooms"].items() if v == "clean" and int(occ_.get(r, 0)) > 0)
+        if cl_occ_:
+            st.warning(f"{HK['w_clean']} {', '.join(cl_occ_)}")
+        if bx["manual"]:
+            st.markdown(f"### {HK['man_t']}")
+            st.warning(HK["man_warn"])
+            for u_ in list(bx["manual"]):
+                opts_ = _candidates(d, bx["rooms"], _occupancy(d), u_, u_["frm"], True)
+                fam_ = f" · {HK['fam']} {html.escape(u_['fam'])}" if u_["fam"] else ""
+                st.markdown(card(f"{u_['frm']}{fam_} · {len(u_['pids'])}", html.escape(names_of(u_["pids"])), HK["why"][u_["why"]]), unsafe_allow_html=True)
+                if opts_:
+                    pa_, pb_ = st.columns([3, 1])
+                    pk_ = pa_.selectbox(HK["pick"], [r for r, _ in opts_], key=f"hk_pick_{u_['pids'][0]}",
+                                        format_func=lambda r, o=dict(opts_): f"{r} · {T['fl']} {room_floor(r)}" + (f" ⚠️ {HK['viol']}" if o[r] else ""))
+                    pb_.button(HK["seat"], key=f"hk_seat_{u_['pids'][0]}", on_click=lambda u=u_, r=pk_: seat_unit(u, r))
+                else:
+                    st.info(HK["no_cand"])
+        st.markdown(f"### {HK['log_t']}")
+        lrows = ""
+        for ts_, kind_, frm_, to_, pids_, fam_k in bx["move_log"][:10]:
+            sty_ = "background:rgba(180,42,39,.14);color:#B42A27;font-weight:700;" if kind_ in ("pending", "rej") else ""
+            lrows += (f"<div class='row' style='grid-template-columns:80px 120px 1fr 170px;border-radius:8px;padding:4px 8px;{sty_}'>"
+                      f"<span>{ts_}</span><span dir='ltr'>{frm_} → {to_ or '—'}</span><span>{html.escape(names_of(pids_))}</span><span>{HK['lk'][kind_]}</span></div>")
+        st.markdown(f"<div class='card'>{lrows or '<small>' + HK['no_log'] + '</small>'}</div>", unsafe_allow_html=True)
+
+# ---------- ECO-MODE TAB (preview only) ----------
+@st.cache_data
+def eco_compute(dd, rooms_items, sim_pct, eligible, auto, manual_k):
+    rooms_ = dict(rooms_items)
+    sim = simulate_departures(dd, sim_pct)
+    sug = suggest_close(sim, rooms_) if eligible else 0
+    k = sug if auto else manual_k
+    plan = {a: b for a, b in plan_consolidation(sim, rooms_, top_floors(k)).items() if a != "after"}
+    return dict(sim_n=int((sim.room != "").sum()), sug=sug, k=k, plan=plan)
+
+
+with TB["eco"]:
+    if "eco" in keys:
+        EC = T["eco"]
+        st.markdown(f"### {EC['title']}")
+        st.warning(EC["sim_note"])
+        act_pct = int(round(int((d.room != "").sum()) / TOTAL_BEDS * 100))
+        ea, eb = st.columns(2)
+        pct_in = ea.slider(EC["s_pct"], 10, 100, 50, 5, key="eco_pct")
+        thr = eb.slider(EC["s_thr"], 10, 100, 60, 5, key="eco_thr")
+        use_actual = pct_in >= act_pct
+        used_pct = act_pct if use_actual else pct_in
+        eco_auto = st.toggle(EC["auto"], value=True, key="eco_auto")
+        eco_mk = st.slider(EC["s_k"], 0, MAX_CLOSE, 2, key="eco_k", disabled=eco_auto)
+        er = eco_compute(d, tuple(sorted(bx["rooms"].items())), 100 if use_actual else pct_in, used_pct < thr, eco_auto, eco_mk)
+        pl = er["plan"]
+        for col, lab, v, ex in zip(st.columns(3), (EC["actual"], EC["used"], EC["sug"]), (f"{act_pct}%", f"{used_pct}%", er["sug"]), ("", f"{er['sim_n']}", "")):
+            col.markdown(card(lab, v, ex), unsafe_allow_html=True)
+        if used_pct >= thr:
+            st.info(EC["not_low"])
+        elif er["sug"] > 0:
+            st.success(EC["ok_sug"].format(k=er["sug"], fl=", ".join(str(x) for x in top_floors(er["sug"]))))
+        else:
+            st.info(EC["k0"])
+        if er["k"] > 0:
+            st.markdown(f"### {EC['fl_t']}")
+            frs_ = ""
+            for r_ in pl["floors"]:
+                sty_ = "background:#F3EAD3;color:#10343A;border-radius:8px;padding:4px 8px;" if r_["closed"] else ""
+                mv_ = f"{r_['moves']} {EC['units']}" if r_["moves"] else ""
+                frs_ += (f"<div class='row' style='{sty_}'><b>{T['fl']} {r_['floor']}</b><span>{EC['before']} {r_['before']} · {EC['after']} {r_['after']}</span>"
+                         f"<span>{EC['st'][1 if r_['closed'] else 0]}</span><span>{mv_}</span></div>")
+            st.markdown(f"<div class='card'>{frs_}</div>", unsafe_allow_html=True)
+            st.markdown(EC["moved"].format(u=pl["moved_units"], p=pl["moved_pilgrims"]))
+            if pl["unplaced_units"]:
+                st.error(EC["unplaced"].format(u=pl["unplaced_units"], p=pl["unplaced_pilgrims"]))
+        st.markdown(f"### {EC['e_title']}")
+        g1, g2, g3, g4 = st.columns(4)
+        e_cons = g1.slider(EC["s_cons"], 100, 1500, 300, 50, key="eco_cons")
+        e_red = g2.slider(EC["s_red"], 10, 100, 60, 5, key="eco_red")
+        e_days = g3.slider(EC["s_days"], 1, 30, 7, key="eco_days")
+        e_price = g4.slider(EC["s_price"], 0.05, 1.0, 0.30, 0.05, key="eco_price")
+        e_kwh, e_cost = eco_estimate(er["k"], e_cons, e_red, e_days, e_price)
+        for col, lab, v, unit in zip(st.columns(2), (EC["e_kwh"], EC["e_cost"]), (f"{e_kwh:,.0f}", f"{e_cost:,.0f}"), ("kWh", "SAR")):
+            col.markdown(card(lab, v, unit), unsafe_allow_html=True)
+        st.caption(EC["e_formula"])
+        st.caption(EC["approx"])
+        st.caption(EC["review"])
+        st.caption(EC["rules"])
 
 # ---------- DRIVER / SUPERVISOR ----------
 with TB["driver"]:

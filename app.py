@@ -47,6 +47,11 @@ L = {
         rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
                               mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
         fs=("جاهزة", "تحت الفحص", "عطلانة"), fl_set="حالة الحافلة", fl_btn="تحديث الحالة", fl_alert="🚨 فيه حافلة عطلانة: تم إرسال فريق صيانة متنقل (محاكاة)",
+        tr=("لوحة عامل الامتلاء وتجميع الرحلات (محاكاة)", "الفرق الزمني أقل من (دقيقة)", "امتلاء كل رحلة أقل من (%)", "رحلة", "الموعد", "الركاب",
+            "نسبة الامتلاء", "تنبيه دمج: رحلتان متقاربتان وغير ممتلئتين", "{n} راكب في حافلة واحدة · الفارق {gap} دقيقة", "تأكيد الدمج",
+            "ملغاة (مدمجة)", "كيلومترات موفّرة بالدمج", "لا توجد رحلات مناسبة للدمج بالعتبات الحالية",
+            "جدول الرحلات وأعداد الركاب بيانات محاكاة وغير مربوطة بقائمة المعتمرين. العتبات قابلة للضبط وقيمها الافتراضية تجريبية. الكيلومترات الموفّرة معلومة تشغيلية وليست مبلغًا ماليًا.",
+            "رحلات نشطة", "متوسط الامتلاء"),
         eg=("كفاءة الأسطول", "مقاعد الحافلة", "نسبة الركوب الفعلي", "حافلات لازمة بهذه السعة", "السعة المطلوبة لو قلّلنا حافلة",
             "نسبة الركوب محسوبة من عمليات الحضور الحالية (محاكاة).",
             "حاسبة الطاقة (قيم افتراضية للتوضيح)", "سعر لتر الوقود (ر.س)", "استهلاك الديزل (لتر/100 كم)", "استهلاك الكهرباء (kWh/100 كم)",
@@ -95,6 +100,11 @@ L = {
         rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
                               mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
         fs=("Ready", "Inspection", "Broken down"), fl_set="Bus status", fl_btn="Update status", fl_alert="🚨 A bus is down: mobile maintenance team dispatched (simulated)",
+        tr=("Load factor & trip consolidation (simulated)", "Time gap under (min)", "Each trip fill under (%)", "Trip", "Time", "Pax",
+            "Fill rate", "Merge alert: two close, under-filled trips", "{n} pax in one bus · gap {gap} min", "Confirm merge",
+            "Cancelled (merged)", "Km saved by merging", "No trips qualify for merging at the current thresholds",
+            "Trip schedule and passenger counts are simulated and not linked to the pilgrim list. Thresholds are adjustable with illustrative defaults. Km saved is an operational figure, not a money amount.",
+            "Active trips", "Average fill"),
         eg=("Fleet efficiency", "Seats per bus", "Actual boarding rate", "Buses needed at this capacity", "Seats needed with one fewer bus",
             "Boarding rate is computed from current check-in operations (simulated).",
             "Energy calculator (illustrative defaults)", "Fuel price per liter (SAR)", "Diesel consumption (L/100 km)", "Electric consumption (kWh/100 km)",
@@ -295,6 +305,41 @@ def range_check(battery_kwh, kwh100, reserve_pct, trip_km):
     return rng, rng >= trip_km
 
 
+def fill_pct(pax, seats):
+    return pax / seats * 100 if seats > 0 else 0.0
+
+
+def to_min(hhmm):
+    h, m = hhmm.split(":")
+    return int(h) * 60 + int(m)
+
+
+def base_trips(nb, seats=45, km=25):
+    plan = [("08:00", 18), ("08:20", 15), ("09:30", 44), ("10:15", 40), ("11:00", 20), ("11:25", 12), ("13:00", 38), ("14:30", 45)]
+    return [dict(id=i + 1, bus=i % max(nb, 1) + 1, time=tm, pax=px_, seats=seats, km=km) for i, (tm, px_) in enumerate(plan)]
+
+
+def apply_merges(trips, merged):
+    out = [dict(x, cancelled=False) for x in trips]
+    by = {x["id"]: x for x in out}
+    for drop, keep in merged.items():
+        if drop in by and keep in by and not by[keep]["cancelled"] and not by[drop]["cancelled"]:
+            by[keep]["pax"] += by[drop]["pax"]
+            by[drop]["pax"], by[drop]["cancelled"] = 0, True
+    return out
+
+
+def merge_candidates(trips, max_gap_min, max_fill_pct):
+    live = sorted([x for x in trips if not x["cancelled"]], key=lambda x: to_min(x["time"]))
+    out = []
+    for a, b in zip(live, live[1:]):
+        gap = to_min(b["time"]) - to_min(a["time"])
+        if (gap < max_gap_min and fill_pct(a["pax"], a["seats"]) < max_fill_pct and fill_pct(b["pax"], b["seats"]) < max_fill_pct
+                and a["pax"] + b["pax"] <= a["seats"]):
+            out.append((a, b, gap))
+    return out
+
+
 def show(fig, h=290, donut=None):
     fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", dragmode=False, height=h,
                       font=dict(color=C["ink"], family="Tajawal"), margin=dict(l=0, r=0, t=40, b=0), title_font_size=16,
@@ -334,6 +379,7 @@ def box(k):
     b.setdefault("inc", [])
     b.setdefault("down_at", {})
     b.setdefault("sla_min", 60)
+    b.setdefault("merged", {})
     return b
 
 
@@ -394,7 +440,7 @@ if bad:
 d = alloc(raw)
 bx = box(hi if up is None else ("up", up.name))
 if s.role == "mgr":
-    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[], down_at={}, sla_min=60), s.update(queue=[])))
+    st.button(T["rst"], key="rst", on_click=lambda: (bx.update(checked=set(), log=[], msgs=None, fleet={}, inc=[], down_at={}, sla_min=60, merged={}), s.update(queue=[])))
 
 
 NMAP, BMAP = d.set_index("pid")[NM], d.set_index("pid").bus
@@ -406,6 +452,8 @@ def commit(item):
         if p not in bx["checked"]:
             bx["checked"].add(p)
             bx["log"].insert(0, f"{p} · {NMAP[p]} · {T['bus']} {BMAP[p]}")
+    elif item[0] == "merge":
+        bx["merged"][item[2]] = item[1]
     else:
         _, b_, st_, kind, ts = item
         bx["fleet"][b_] = st_
@@ -426,6 +474,17 @@ def mark(pids):
         for p in new:
             commit(("scan", p))
         s.flash = T["done_t"].format(n=len(new))
+
+
+def merge_trip(keep, drop):
+    item = ("merge", keep, drop)
+    if s.offline:
+        if item not in s.queue:
+            s.queue.append(item)
+        s.flash = T["queued"].format(n=1)
+    else:
+        commit(item)
+        s.flash = T["done_t"].format(n=1)
 
 
 def fleet_set(bus, status, kind):
@@ -717,22 +776,39 @@ with TB["fleet"]:
 with TB["energy"]:
     if "energy" in keys:
         G = T["eg"]
-        st.markdown(f"### {G[0]}")
-        e1, e2 = st.columns(2)
-        seats = e1.slider(G[1], 20, 60, 45, key="e_seats")
-        tot_b = int(by_bus.sum())
-        e2.markdown(card(G[29], nb), unsafe_allow_html=True)
-        need_b = buses_needed(tot_b, seats)
-        seats_less = seats_for_n_buses(tot_b, nb - 1) if nb > 1 else 0
-        for col, lab, v, ex in zip(st.columns(2), (G[3], G[4]), (need_b, seats_less or "-"),
-                                   (f"/ {nb}", f"{seats_less - seats:+d}" if seats_less else "")):
-            col.markdown(card(lab, v, ex), unsafe_allow_html=True)
-        frs = "".join(
-            f"<div class='row'><b>{T['bus']} {n}</b><span>{fill_rate(int(boarded.get(n, 0)), seats):.0%}</span>"
-            f"<span>{int(boarded.get(n, 0))}</span><span>{int(by_bus.get(n, 0))}</span></div>"
-            for n in range(1, nb + 1))
-        st.markdown(f"<div class='card' style='margin-top:12px'><small>{G[2]}</small>{frs}</div>", unsafe_allow_html=True)
-        st.caption(G[5])
+        TR = T["tr"]
+        st.markdown(f"### {TR[0]}")
+        mc1, mc2 = st.columns(2)
+        mg_gap = mc1.slider(TR[1], 5, 90, 30, 5, key="e_mgap")
+        mg_fill = mc2.slider(TR[2], 10, 100, 50, 5, key="e_mfill")
+        trips = apply_merges(base_trips(nb), bx["merged"])
+        live_ = [x for x in trips if not x["cancelled"]]
+        km_saved = sum(x["km"] for x in trips if x["cancelled"])
+        avg_fill = sum(fill_pct(x["pax"], x["seats"]) for x in live_) / len(live_) if live_ else 0
+        for col, lab, v in zip(st.columns(3), (TR[14], TR[15], TR[11]), (len(live_), f"{avg_fill:.0f}%", f"{km_saved} km")):
+            col.markdown(card(lab, v), unsafe_allow_html=True)
+        trows = ""
+        for x in trips:
+            pc = fill_pct(x["pax"], x["seats"])
+            low = (not x["cancelled"]) and pc < mg_fill
+            colr = "#B42A27" if low else GOLD
+            txt = f"{x['time']} · {T['bus']} {x['bus']} · " + (TR[10] if x["cancelled"] else f"{pc:.0f}%")
+            trows += (f"<div class='row' style='grid-template-columns:90px 1fr 190px 60px;{'opacity:.45;' if x['cancelled'] else ''}'>"
+                      f"<b>{TR[3]} {x['id']}</b>"
+                      f"<div style='background:rgba(127,127,127,.22);border-radius:6px;height:12px'>"
+                      f"<div style='width:{pc:.0f}%;height:12px;border-radius:6px;background:{colr};transition:width .6s ease'></div></div>"
+                      f"<span>{txt}</span><span>{x['pax']}/{x['seats']}</span></div>")
+        st.markdown(f"<div class='card' style='margin-top:12px'>{trows}</div>", unsafe_allow_html=True)
+        cands = merge_candidates(trips, mg_gap, mg_fill)
+        if cands:
+            for ca, cb, gp in cands:
+                cc1, cc2 = st.columns([4, 1])
+                cc1.markdown(card(TR[7], f"{TR[3]} {ca['id']} ⟵ {TR[3]} {cb['id']}",
+                                  TR[8].format(n=ca["pax"] + cb["pax"], gap=gp)), unsafe_allow_html=True)
+                cc2.button(TR[9], key=f"mg_{cb['id']}", on_click=lambda k=ca["id"], d_=cb["id"]: merge_trip(k, d_))
+        else:
+            st.info(TR[12])
+        st.caption(TR[13])
 
         st.markdown(f"### {G[6]}")
         g1, g2, g3, g4 = st.columns(4)

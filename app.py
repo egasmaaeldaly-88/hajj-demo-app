@@ -1,3 +1,4 @@
+import base64
 import html
 import io
 import random
@@ -35,7 +36,7 @@ L = {
         net="الاتصال (محاكاة)", off_msg="🔴 وضع بدون إنترنت (محاكاة): العمليات بتتحفظ محليًا في طابور ومش بتوصل للسيرفر لحد المزامنة.",
         q_lbl="عمليات في انتظار المزامنة", sync="🔄 مزامنة الآن", syncing="جاري رفع العمليات للسيرفر...",
         synced="تمت مزامنة {n} عملية بنجاح", queued="تم الحفظ محليًا: {n} عملية في الطابور", done_t="تم تسجيل {n} عملية",
-        inc="سجل البلاغات والتنبيهات", ik=("بلاغ طوارئ SOS", "تحديث حالة"), no_inc="لا توجد بلاغات",
+        inc="سجل البلاغات والتنبيهات", pg_rep="بلّغ عن مشكلة", pg_sent="وصل بلاغك للإدارة", pg_badge="تحميل كارت الهوية للطباعة", ik=("بلاغ طوارئ SOS", "تحديث حالة", "بلاغ من معتمر"), no_inc="لا توجد بلاغات",
         fin=("الحاسبة المالية (قيم افتراضية للتوضيح)", "سعر لتر الوقود (ر.س)", "استهلاك الحافلة (لتر/100 كم)", "رحلات الحافلة في الموسم",
              "مسافة الرحلة (كم)", "تكلفة تشغيل الحافلة في الموسم (ر.س)", "سعر العقد للمعتمر (ر.س)", "تكاليف ثابتة (ر.س)",
              "الإيراد", "التكلفة", "صافي الربح", "هامش الربح", "الوقود", "التشغيل", "ثابتة", "الإيراد مقابل التكلفة",
@@ -71,7 +72,7 @@ L = {
         net="Connection (simulated)", off_msg="🔴 Offline mode (simulated): operations are saved locally in a queue and do not reach the server until sync.",
         q_lbl="Operations waiting to sync", sync="🔄 Sync now", syncing="Uploading operations to the server...",
         synced="{n} operations synced successfully", queued="Saved locally: {n} operation(s) queued", done_t="{n} operation(s) recorded",
-        inc="Incident and alert log", ik=("SOS emergency", "Status update"), no_inc="No incidents",
+        inc="Incident and alert log", pg_rep="Report a problem", pg_sent="Your report reached management", pg_badge="Download printable ID card", ik=("SOS emergency", "Status update", "Pilgrim report"), no_inc="No incidents",
         fin=("Financial calculator (illustrative defaults)", "Fuel price per liter (SAR)", "Bus consumption (L/100 km)", "Trips per bus per season",
              "Trip distance (km)", "Bus operating cost per season (SAR)", "Contract price per pilgrim (SAR)", "Fixed costs (SAR)",
              "Revenue", "Cost", "Net profit", "Profit margin", "Fuel", "Operations", "Fixed", "Revenue vs cost",
@@ -290,7 +291,18 @@ if "pid" in qp:  # opened by scanning a pilgrim QR code
             bq["checked"].add(r0.pid)
             bq["log"].insert(0, f"{r0.pid} · {r0[NM]} · {T['bus']} {r0.bus}")
         st.markdown(f"<h1 class='ttl'>🕋 {T['brand']}</h1>", unsafe_allow_html=True)
-        st.markdown(card(T["qr_ok"], f"✅ {r0[NM]}", f"{r0.pid} · {T['bus']} {r0.bus}"), unsafe_allow_html=True)
+        dep_q = bq["msgs"][2] if bq["msgs"] and bq["msgs"][0] == r0.bus else "14:00"
+        st.markdown(card(T["qr_ok"], f"✅ {r0[NM]}", f"{r0.pid}"), unsafe_allow_html=True)
+        det = [(T["hotel"], T["hotels"][hq]), (T["rm"], r0.room or "-"), (T["fl"], r0.floor or "-"),
+               (T["bus"], r0.bus or "-"), (T["dr_dep"], dep_q)]
+        st.markdown("<div class='card' style='margin-top:12px'>" + "".join(
+            f"<div class='row' style='grid-template-columns:110px 1fr'><b>{a_}</b><span>{b_}</span></div>" for a_, b_ in det)
+            + "</div>", unsafe_allow_html=True)
+        st.button(T["pg_rep"], key="pg_rep", on_click=lambda: (
+            bq["inc"].insert(0, (time.strftime("%H:%M:%S"), int(r0.bus), "pilgrim", fstat(bq, int(r0.bus)))),
+            s.update(pg_sent=True)))
+        if s.get("pg_sent"):
+            st.success(T["pg_sent"])
     st.stop()
 
 # ---------- TOP BAR ----------
@@ -535,6 +547,17 @@ with TB["qr"]:
         qrcode.make(f"{APP_URL}?pid={sel}&h={hi}").save(buf, "PNG")
         st.image(buf.getvalue(), width=200)
         st.caption(T["qr_note"])
+        rw_ = d[d.pid == sel].iloc[0]
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        badge = (f"<div dir='{'rtl' if AR else 'ltr'}' style='width:320px;font-family:Tajawal,Arial,sans-serif;"
+                 f"border:2px solid {GOLD};border-radius:16px;padding:16px;text-align:center;background:#fff;color:#10343A'>"
+                 f"<div style='font-weight:700;color:#0E7C86'>🕋 {T['brand']}</div>"
+                 f"<div style='font-size:22px;font-weight:700;margin:8px 0'>{html.escape(str(rw_[NM]))}</div>"
+                 f"<img src='data:image/png;base64,{b64}' width='150'/>"
+                 f"<div style='font-size:13px;margin-top:8px'>{sel} · {T['hotels'][hi]}<br>"
+                 f"{T['rm']} {rw_.room or '-'} · {T['bus']} {rw_.bus or '-'}</div></div>")
+        st.markdown(badge, unsafe_allow_html=True)
+        st.download_button(T["pg_badge"], ("<meta charset='utf-8'>" + badge).encode("utf-8"), f"{sel}_badge.html", "text/html", key="dl_badge")
         st.button(T["scan"], key="scan", on_click=lambda: mark([sel]))
         st.button(T["scan10"], key="scan10", on_click=lambda: mark([p for p in d[d.bus > 0].pid if p not in bx["checked"]][:10]))
     with b:
@@ -586,9 +609,9 @@ def ops_feed():
     st.markdown(f"### {T['inc']}")
     irows = ""
     for ts, n, kind, stt in bx["inc"][:8]:
-        sty = "background:rgba(180,42,39,.14);color:#B42A27;font-weight:700;" if kind == "sos" else ""
+        sty = "background:rgba(180,42,39,.14);color:#B42A27;font-weight:700;" if kind in ("sos", "pilgrim") else ""
         irows += (f"<div class='row' style='grid-template-columns:90px 1fr 120px;border-radius:8px;padding:4px 8px;{sty}'>"
-                  f"<span>{ts}</span><span>{T['bus']} {n} · {T['ik'][0 if kind == 'sos' else 1]}</span>"
+                  f"<span>{ts}</span><span>{T['bus']} {n} · {T['ik'][{'sos': 0, 'pilgrim': 2}.get(kind, 1)]}</span>"
                   f"<span>{T['fs'][OKS.index(stt)]}</span></div>")
     st.markdown(f"<div class='card'>{irows or '<small>' + T['no_inc'] + '</small>'}</div>", unsafe_allow_html=True)
 

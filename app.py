@@ -3,6 +3,7 @@ import html
 import io
 import random
 import time
+from urllib.parse import quote
 from datetime import time as dtime
 
 import numpy as np
@@ -36,13 +37,13 @@ L = {
         net="الاتصال (محاكاة)", off_msg="🔴 وضع بدون إنترنت (محاكاة): العمليات بتتحفظ محليًا في طابور ومش بتوصل للسيرفر لحد المزامنة.",
         q_lbl="عمليات في انتظار المزامنة", sync="🔄 مزامنة الآن", syncing="جاري رفع العمليات للسيرفر...",
         synced="تمت مزامنة {n} عملية بنجاح", queued="تم الحفظ محليًا: {n} عملية في الطابور", done_t="تم تسجيل {n} عملية",
-        inc="سجل البلاغات والتنبيهات", pg_rep="بلّغ عن مشكلة", pg_sent="وصل بلاغك للإدارة", pg_badge="تحميل كارت الهوية للطباعة", ik=("بلاغ طوارئ SOS", "تحديث حالة", "بلاغ من معتمر"), no_inc="لا توجد بلاغات",
+        inc="سجل البلاغات والتنبيهات", pg_rep="بلّغ عن مشكلة", ann_title="إعلان من الإدارة", ann_share="شارك على واتساب", ann_reach="يظهر لـ {n} معتمر في صفحة الكود وفي شاشة السائق والمشرف", ann_all="الأحبة المعتمرين", pg_sent="وصل بلاغك للإدارة", pg_badge="تحميل كارت الهوية للطباعة", ik=("بلاغ طوارئ SOS", "تحديث حالة", "بلاغ من معتمر"), no_inc="لا توجد بلاغات",
         fin=("الحاسبة المالية (قيم افتراضية للتوضيح)", "سعر لتر الوقود (ر.س)", "استهلاك الحافلة (لتر/100 كم)", "رحلات الحافلة في الموسم",
              "مسافة الرحلة (كم)", "تكلفة تشغيل الحافلة في الموسم (ر.س)", "سعر العقد للمعتمر (ر.س)", "تكاليف ثابتة (ر.س)",
              "الإيراد", "التكلفة", "صافي الربح", "هامش الربح", "الوقود", "التشغيل", "ثابتة", "الإيراد مقابل التكلفة",
              "الأرقام افتراضية وتتغير بالمدخلات، وليست بيانات حقيقية."),
         tn=dict(dash="📊 لوحة التحكم", house="⚡ التسكين الذكي", buses="🚌 الحافلات", fleet="🚨 غرفة العمليات",
-                driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="💬 واتساب"),
+                driver="🧑‍✈️ السائق والمشرف", qr="📱 حضور QR", wa="📣 الإشعارات"),
         rl=("ادخل بصفتك", dict(hotel=("🏨 فندق", "التسكين وإشغال الغرف"), bus=("🚌 شركة حافلات", "الأسطول والحافلات والحضور"),
                               mgr=("🧭 مدير المنصة", "كل الموديولات"))), sw="تبديل الدور", rst="إعادة ضبط الديمو",
         fs=("جاهزة", "تحت الفحص", "عطلانة"), fl_set="حالة الحافلة", fl_btn="تحديث الحالة", fl_alert="🚨 فيه حافلة عطلانة: تم إرسال فريق صيانة متنقل (محاكاة)",
@@ -72,13 +73,13 @@ L = {
         net="Connection (simulated)", off_msg="🔴 Offline mode (simulated): operations are saved locally in a queue and do not reach the server until sync.",
         q_lbl="Operations waiting to sync", sync="🔄 Sync now", syncing="Uploading operations to the server...",
         synced="{n} operations synced successfully", queued="Saved locally: {n} operation(s) queued", done_t="{n} operation(s) recorded",
-        inc="Incident and alert log", pg_rep="Report a problem", pg_sent="Your report reached management", pg_badge="Download printable ID card", ik=("SOS emergency", "Status update", "Pilgrim report"), no_inc="No incidents",
+        inc="Incident and alert log", pg_rep="Report a problem", ann_title="Management announcement", ann_share="Share on WhatsApp", ann_reach="Shown to {n} pilgrims on their code page and on the driver and supervisor screen", ann_all="dear pilgrims", pg_sent="Your report reached management", pg_badge="Download printable ID card", ik=("SOS emergency", "Status update", "Pilgrim report"), no_inc="No incidents",
         fin=("Financial calculator (illustrative defaults)", "Fuel price per liter (SAR)", "Bus consumption (L/100 km)", "Trips per bus per season",
              "Trip distance (km)", "Bus operating cost per season (SAR)", "Contract price per pilgrim (SAR)", "Fixed costs (SAR)",
              "Revenue", "Cost", "Net profit", "Profit margin", "Fuel", "Operations", "Fixed", "Revenue vs cost",
              "Figures are illustrative and change with the inputs; they are not real data."),
         tn=dict(dash="📊 Dashboard", house="⚡ Smart housing", buses="🚌 Buses", fleet="🚨 Operations room",
-                driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="💬 WhatsApp"),
+                driver="🧑‍✈️ Driver & supervisor", qr="📱 QR check-in", wa="📣 Announcements"),
         rl=("Sign in as", dict(hotel=("🏨 Hotel", "Housing and room occupancy"), bus=("🚌 Bus company", "Fleet, buses and check-in"),
                               mgr=("🧭 Platform manager", "All modules"))), sw="Switch role", rst="Reset demo",
         fs=("Ready", "Inspection", "Broken down"), fl_set="Bus status", fl_btn="Update status", fl_alert="🚨 A bus is down: mobile maintenance team dispatched (simulated)",
@@ -260,6 +261,10 @@ def card(label, value, extra=""):
     return f"<div class='card'><small>{label}</small><b>{value}</b><small>{extra}</small></div>"
 
 
+def ann_text(tpl, name, bus, tm):
+    return tpl.replace("{name}", name).replace("{bus}", f"{T['bus']} {bus}").replace("{time}", tm)
+
+
 APP_URL = "https://hajj-demo-app-7fkifuz3mr3zgtohpqnlqi.streamlit.app/"
 
 
@@ -298,6 +303,9 @@ if "pid" in qp:  # opened by scanning a pilgrim QR code
         st.markdown("<div class='card' style='margin-top:12px'>" + "".join(
             f"<div class='row' style='grid-template-columns:110px 1fr'><b>{a_}</b><span>{b_}</span></div>" for a_, b_ in det)
             + "</div>", unsafe_allow_html=True)
+        if bq["msgs"] and bq["msgs"][0] == r0.bus:
+            st.markdown(card(T["ann_title"], "📣", html.escape(ann_text(bq["msgs"][1], str(r0[NM]), r0.bus, bq["msgs"][2]))),
+                        unsafe_allow_html=True)
         st.button(T["pg_rep"], key="pg_rep", on_click=lambda: (
             bq["inc"].insert(0, (time.strftime("%H:%M:%S"), int(r0.bus), "pilgrim", fstat(bq, int(r0.bus)))),
             s.update(pg_sent=True)))
@@ -568,26 +576,22 @@ with TB["qr"]:
         for line in bx["log"][:6]:
             st.write("✅ " + line)
 
-# ---------- 5. WHATSAPP ----------
+# ---------- 5. ANNOUNCEMENTS ----------
 with TB["wa"]:
     a, b = st.columns([1, 1])
     with a:
-        wb = st.selectbox(T["wa_bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}")
-        wt = st.time_input(T["wa_time"], value=dtime(14, 0))
-        tpl = st.text_area(T["wa_tpl"], T["wa_msg"], height=110)
-        if st.button(T["wa_btn"], key="wa"):
-            bx["msgs"] = (wb, tpl, wt.strftime("%H:%M"))
+        st.selectbox(T["wa_bus"], range(1, nb + 1), format_func=lambda x: f"{T['bus']} {x}", key="wa_b")
+        st.time_input(T["wa_time"], value=dtime(14, 0), key="wa_t")
+        st.text_area(T["wa_tpl"], T["wa_msg"], height=110, key="wa_x")
+        st.button(T["wa_btn"], key="wa", on_click=lambda: bx.update(msgs=(s.wa_b, s.wa_x, s.wa_t.strftime("%H:%M"))))
     with b:
         if bx["msgs"]:
             mb, mt, mtime = bx["msgs"]
-            mem = d[d.bus == mb]
-            bub = "".join(
-                f"<div class='bub'>{html.escape(mt.replace('{name}', nm_).replace('{bus}', f'{T['bus']} {mb}').replace('{time}', mtime))}</div>"
-                for nm_ in mem[NM].head(3))
-            st.markdown(f"<div class='phone'>{bub}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='card' style='margin-top:14px'><b>{len(mem)}</b><small>{T['wa_q']}</small></div>",
-                        unsafe_allow_html=True)
-
+            n_m = int((d.bus == mb).sum())
+            atxt = ann_text(mt, T["ann_all"], mb, mtime)
+            st.markdown(f"<div class='phone'><div class='bub'>{html.escape(atxt)}</div></div>", unsafe_allow_html=True)
+            st.markdown(card(T["ann_title"], n_m, T["ann_reach"].format(n=n_m)), unsafe_allow_html=True)
+            st.link_button(T["ann_share"], "https://wa.me/?text=" + quote(atxt))
 
 # ---------- OPERATIONS ROOM ----------
 OKS = ("ok", "check", "down")
@@ -633,5 +637,9 @@ with TB["driver"]:
     dep = bx["msgs"][2] if bx["msgs"] and bx["msgs"][0] == dbus else "14:00"
     nbd = int(d[d.pid.isin(bx["checked"]) & (d.bus == dbus)].shape[0])
     st.markdown(card(f"{T['bus']} {dbus}", f"{nbd}/{len(mem_)}", f"{T['dr_route']} · {T['dr_dep']} {dep}"), unsafe_allow_html=True)
+    if bx["msgs"] and bx["msgs"][0] == dbus:
+        atxt_d = ann_text(bx["msgs"][1], T["ann_all"], dbus, bx["msgs"][2])
+        st.info("📣 " + atxt_d)
+        st.link_button(T["ann_share"], "https://wa.me/?text=" + quote(atxt_d))
 
 st.markdown(f"<p style='text-align:center;color:var(--mute);margin-top:32px'>{T['foot']}<br><b style='color:var(--pri)'>{T['by']} {T['brand']}</b></p>", unsafe_allow_html=True)
